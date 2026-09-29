@@ -191,6 +191,10 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
   .pill.warn{background:var(--warn-tint); color:var(--warn);}
   .pill.critical{background:var(--critical-tint); color:var(--critical);}
   .pill .dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+  .desglose{margin-top:10px; font-size:12.5px; color:var(--ink-3); line-height:1.6;}
+  .desglose div{display:flex; justify-content:space-between; gap:10px;}
+  .desglose b{color:var(--ink,inherit); font-variant-numeric:tabular-nums;}
+  .desglose .tot{border-top:1px solid var(--line); margin-top:3px; padding-top:3px; font-weight:700;}
 
   .compare{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
   @media (max-width:680px){ .compare{grid-template-columns:1fr;} }
@@ -426,6 +430,7 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
             <div class="gauge-thresh" style="left:35%;"></div>
           </div>
         </div>
+        <div id="bd25" class="desglose"></div>
         <div id="pill25"></div>
       </div>
     </div>
@@ -446,10 +451,13 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
             <div class="gauge-thresh" style="left:35%;"></div>
           </div>
         </div>
+        <div id="bd30" class="desglose"></div>
         <div id="pill30"></div>
       </div>
     </div>
   </div>
+
+  <div class="hint" id="ratioExplica" style="margin:14px 0 0;"></div>
 
   <div class="hint" id="faltaAhorroWrap" style="margin:16px 0 0;"></div>
 
@@ -555,6 +563,13 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
     $(ids.ratio).style.color = color;
     $(ids.gauge).style.width = Math.min(100, ratio) + '%';
     $(ids.gauge).style.background = color;
+    if(ids.bd){
+      $(ids.bd).innerHTML = `
+        <div><span>Cuota hipoteca</span><b>${eur2(cuota)}</b></div>
+        ${otrasCuotas > 0 ? `<div><span>Otros préstamos</span><b>+ ${eur2(otrasCuotas)}</b></div>
+        <div class="tot"><span>Total deudas al mes</span><b>${eur2(cargaTotal)}</b></div>` : ''}
+        <div><span>Ingresos netos al mes</span><b>${eur(ingresos)}</b></div>`;
+    }
     $(ids.pill).innerHTML = ok
       ? `<span class="pill good"><span class="dot"></span>Dentro del 35% habitual</span>`
       : `<span class="pill ${ratio>45?'critical':'warn'}"><span class="dot"></span>Supera el 35% habitual</span>`;
@@ -630,10 +645,10 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
     }
 
     pintarEscenario(2.5, hipoteca, plazo, ingresos, otrasCuotas, {
-      cuota:'cuota25', ratio:'ratio25', gauge:'gauge25', pill:'pill25'
+      cuota:'cuota25', ratio:'ratio25', gauge:'gauge25', pill:'pill25', bd:'bd25'
     });
     pintarEscenario(3.0, hipoteca, plazo, ingresos, otrasCuotas, {
-      cuota:'cuota30', ratio:'ratio30', gauge:'gauge30', pill:'pill30'
+      cuota:'cuota30', ratio:'ratio30', gauge:'gauge30', pill:'pill30', bd:'bd30'
     });
 
     const ahorrosNecesarios80 = Math.max(0, costeTotal - 0.80*precio);
@@ -656,6 +671,13 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
         </div>
       </div>` : '';
 
+    {
+      const cA = cuotaMensual(hipoteca, 2.5, plazo);
+      const deudaA = cA + otrasCuotas;
+      $('ratioExplica').innerHTML = ingresos > 0
+        ? `<b>¿Qué es el ratio de endeudamiento?</b> Es la parte de los ingresos netos mensuales que se va en pagar deudas: (cuota de la hipoteca${otrasCuotas>0?' + otros préstamos':''}) ÷ ingresos netos. Ej. escenario A: ${eur2(deudaA)} ÷ ${eur(ingresos)} = <b>${pct(deudaA/ingresos*100,1)}%</b>. Los bancos suelen pedir que no pase del 35%.`
+        : '';
+    }
     const esc = t => String(t||'').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
     const escenario = tin => {
       const cuota = cuotaMensual(hipoteca, tin, plazo);
@@ -670,7 +692,7 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
       ajdPct: parseFloat($('ajdPct').value) || 0,
       precio, impuesto, notaria, registro, gestoria, tasacionCoste,
       honorariosImporte, honorariosIva, honorarios, gastos, costeTotal,
-      ahorros, ingresos, otrasCuotas, plazo, ltvBanco, hipoteca, ltv,
+      ahorros, ingresos, otrasCuotas, pagas, plazo, ltvBanco, hipoteca, ltv,
       tasacionNecesaria, extraSobrePrecio,
       escA: escenario(2.5), escB: escenario(3.0),
       ahorrosNecesarios80, ahorrosNecesarios90, falta80, falta90
@@ -720,6 +742,10 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
   .rp-pill{display:inline-block; font-size:8.4pt; font-weight:800; padding:2px 10px; border-radius:119px; margin-top:6px;}
   .rp-pill.ok{background:#e5f3ea; color:#1f8a4c;}
   .rp-pill.ko{background:#faf0dd; color:#9a6212;}
+  .rp-e .bd{margin-top:6px; font-size:9.5pt; color:#565c78;}
+  .rp-e .bd div{display:flex; justify-content:space-between; gap:8px; padding:1px 0;}
+  .rp-e .bd b{color:#10132a; font-variant-numeric:tabular-nums;}
+  .rp-e .bd .tt{border-top:1px solid #e0e3f0; margin-top:2px; padding-top:3px;}
   .rp-note{background:#f4f5fb; border-left:3px solid #082d74; border-radius:5px; padding:10px 13px; font-size:10.1pt; color:#3a3f5c; margin-top:10px;}
   .rp-foot{margin-top:14px; padding-top:9px; border-top:1px solid #e0e3f0; font-size:7.8pt; color:#8890ac; line-height:1.5; display:flex; justify-content:space-between; gap:19px;}
   .rp-foot b{color:#565c78;}
@@ -745,6 +771,12 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
         <div class="tag">${label}</div>
         <div class="tin">Tipo fijo ${pct(x.tin, 2)}%</div>
         <div class="c">${eur2(x.cuota)} <small>/mes</small></div>
+        <div class="bd">
+          <div><span>Cuota hipoteca</span><b>${eur2(x.cuota)}</b></div>
+          ${e.otrasCuotas > 0 ? `<div><span>Otros préstamos</span><b>+ ${eur2(e.otrasCuotas)}</b></div>
+          <div class="tt"><span>Total deudas al mes</span><b>${eur2(x.cuota + e.otrasCuotas)}</b></div>` : ''}
+          <div><span>Ingresos netos al mes</span><b>${eur(e.ingresos)}</b></div>
+        </div>
         <div class="r">Endeudamiento: <b>${pct(x.ratio, 1)}%</b> de los ingresos</div>
         <span class="rp-pill ${x.ratio <= 35 ? 'ok' : 'ko'}">${x.ratio <= 35 ? 'Dentro del 35% recomendado' : 'Supera el 35% recomendado'}</span>
       </div>`;
@@ -816,6 +848,7 @@ body{padding-top:calc(26px + env(safe-area-inset-top,0px))!important; padding-bo
           ${esc(e.escA, 'a', 'Escenario A')}
           ${esc(e.escB, 'b', 'Escenario B')}
         </div>
+        ${e.ingresos > 0 ? `<div class="rp-note"><b>Ratio de endeudamiento:</b> porcentaje de los ingresos netos mensuales${e.pagas === 14 ? ' (14 pagas prorrateadas en 12 meses)' : ''} que se destina a pagar deudas. Se calcula sumando la cuota de la hipoteca${e.otrasCuotas > 0 ? ` y la de los préstamos que ya tiene el cliente (${eur2(e.otrasCuotas)}/mes)` : ''} y dividiéndolo entre los ingresos: en el escenario A, ${eur2(e.escA.cuota + e.otrasCuotas)} ÷ ${eur(e.ingresos)} = <b>${pct(e.escA.ratio, 1)}%</b>. Las entidades suelen exigir que no supere el 35% para conceder la hipoteca.</div>` : ''}
       </div>
 
       <div class="rp-sign">
