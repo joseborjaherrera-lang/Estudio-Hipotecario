@@ -250,6 +250,11 @@ function interpretar(txt){
   else if((m=t.match(/\b(cada|todos los) (lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b/i))){rep='s';const nom=m[2].toLowerCase().replace(/^(s[aá]bado|domingo)s$/,'$1').replace('miercoles','miércoles').replace('sabado','sábado');const di=DIAS.indexOf(nom);const d=new Date();let add=(di-d.getDay()+7)%7;d.setDate(d.getDate()+add);fecha=iso(d);quita(m[0])}
   else if((m=t.match(/\b(cada semana|semanalmente|todas las semanas)\b/i))){rep='s';quita(m[0])}
   else if((m=t.match(/\b(cada mes|mensualmente|todos los meses)\b/i))){rep='m';quita(m[0])}
+  // relativo: "en 20 minutos", "dentro de 2 horas", "en media hora"
+  if((m=t.match(/\b(?:en|dentro de) (\d{1,3}|una?|media) (minutos?|horas?)\b/i))){
+    let n=m[1].toLowerCase()==='media'?0.5:/^una?$/i.test(m[1])?1:+m[1];const min=/hora/i.test(m[2])?n*60:n;
+    const d=new Date(Date.now()+min*60000);fecha=iso(d);hora=pad(d.getHours())+':'+pad(d.getMinutes());quita(m[0]);
+  }
   // fecha
   if(!fecha&&/\bpasado mañana\b/i.test(t)){fecha=masDias(2);quita(/\bpasado mañana\b/i)}
   if(!fecha){const mm=t.match(/(por la |de la )?\bmañana\b/i);if(mm&&!mm[1]){fecha=masDias(1);t=t.replace(mm[0],' ')}}
@@ -263,11 +268,11 @@ function interpretar(txt){
   if(!fecha){m=t.match(/\bel (d[ií]a )?(\d{1,2})\b(?!\s*(:|h\b|dorm|habit|m2|m²|€|%|años|metros))/i);
     if(m){const n=+m[2];if(n>=1&&n<=31){const d=new Date();let c=new Date(d.getFullYear(),d.getMonth(),n);if(c<new Date(hoy()+'T00:00:00'))c=new Date(d.getFullYear(),d.getMonth()+1,n);fecha=iso(c);quita(m[0])}}}
   // hora
-  m=t.match(/\ba las? (\d{1,2})(?:[:.h](\d{2}))?(?:\s*(?:h|horas))?(?:\s+de la (mañana|tarde|noche))?\b/i);
+  m=hora?null:t.match(/\ba las? (\d{1,2})(?:[:.h](\d{2}))?(?:\s*(?:h|horas))?(?:\s+de la (mañana|tarde|noche))?\b/i);
   if(m){let h=+m[1],mi=m[2]?+m[2]:0;const p=(m[3]||'').toLowerCase();
     if((p==='tarde'||p==='noche')&&h<12)h+=12;else if(!p&&h>=1&&h<=8)h+=12;
     if(h<24&&mi<60){hora=pad(h)+':'+pad(mi);quita(m[0])}}
-  else{m=t.match(/\b(\d{1,2})[:.](\d{2})\s*(h|horas)?\b/);if(m&&+m[1]<24&&+m[2]<60){hora=pad(+m[1])+':'+m[2];quita(m[0])}}
+  else if(!hora){m=t.match(/\b(\d{1,2})[:.](\d{2})\s*(h|horas)?\b/);if(m&&+m[1]<24&&+m[2]<60){hora=pad(+m[1])+':'+m[2];quita(m[0])}}
   // tipo
   let tipo=null;for(const k in TIPOS){if(TIPOS[k].k&&TIPOS[k].k.test(limpio)){tipo=k;break}}
   // teléfono
@@ -580,7 +585,7 @@ function descargarIcs(t){
     t.hora?'DTSTART:'+f+'T'+h:'DTSTART;VALUE=DATE:'+f,t.hora?'DTEND:'+f2:'DTEND;VALUE=DATE:'+f,
     t.rep?'RRULE:'+{d:'FREQ=DAILY',lab:'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',s:'FREQ=WEEKLY',m:'FREQ=MONTHLY'}[t.rep]:null,
     'SUMMARY:'+e(TIPOS[t.tipo].i+' '+t.t),desc?'DESCRIPTION:'+e(desc):null,t.dir?'LOCATION:'+e(t.dir):null,
-    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+e(t.t),'TRIGGER:'+(t.hora?'-PT'+(cfg.aviso||0)+'M':'PT9H'),'END:VALARM','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+e(t.t),'TRIGGER:'+(t.hora?(((new Date(t.fecha+'T'+t.hora+':00')-Date.now())/60000<(cfg.aviso||0)+5)?'PT0M':'-PT'+(cfg.aviso||0)+'M'):'PT9H'),'END:VALARM','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='tarea.ics';document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),800);
   toast('Ábrelo y pulsa «Añadir» al calendario');
 }
