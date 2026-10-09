@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gastos de Compra — Inmobiliaria Caraballo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#eef0f7;--surface:#fff;--primary:#082d74;--line:#e0e3f0;
+  --ink:#10132a;--ink-2:#3a3f5c;--ink-3:#565c78;--ink-4:#8890ac;
+  --radius:14px;--shadow:0 2px 12px rgba(8,45,116,.10);
+}
+body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:24px 16px 60px;}
+header.top{margin-bottom:22px;display:flex;justify-content:center;}
+header.top .logo-badge{background:#fff;border-radius:12px;padding:10px 18px;box-shadow:var(--shadow);}
+header.top .logo{height:62px;width:auto;display:block;}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;}
+.card-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--primary);margin-bottom:16px;}
+.grid{display:grid;gap:14px;}
+.grid-2{grid-template-columns:1fr 1fr;}
+.grid-3{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:560px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.field input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 13px;font:600 15px/1 'Manrope',sans-serif;color:var(--ink);background:#fff;outline:none;transition:border-color .15s;}
+.field input:focus{border-color:var(--primary);}
+.field .hint{font-size:10.5px;color:var(--ink-4);margin-top:4px;}
+.field .auto-hint{font-size:10.5px;color:#1a7a3c;margin-top:4px;font-weight:700;}
+.seg{display:flex;gap:6px;flex-wrap:wrap;}
+.seg button{flex:1;min-width:90px;border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;font:700 12px 'Manrope',sans-serif;color:var(--ink-3);background:#fff;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.seg button.on{background:var(--primary);border-color:var(--primary);color:#fff;}
+.band{background:var(--primary);color:#fff;border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.band .bl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;opacity:.7;}
+.band .bv{font-size:16px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.kpi{border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;background:#f6f7fc;}
+.kpi .kl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);}
+.kpi .kv{font-size:17px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;color:var(--ink);}
+.kpi.main{background:var(--primary);border-color:var(--primary);}
+.kpi.main .kl{color:rgba(255,255,255,.7);}
+.kpi.main .kv{color:#fff;}
+.tabla{width:100%;border-collapse:collapse;margin-top:18px;}
+.tabla td{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2);}
+.tabla td:last-child{text-align:right;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.tabla tr.sub td{font-weight:800;color:var(--primary);border-bottom:2px solid #c5cbdf;font-size:13.5px;}
+.tabla td.muted{color:var(--ink-4);font-size:11.5px;}
+.aviso{background:#f0f4ff;border-left:3px solid var(--primary);border-radius:6px;padding:10px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:10px;}
+.aviso b{color:var(--primary);}
+.print-btn{display:flex;align-items:center;gap:8px;justify-content:center;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:13px 24px;font:800 14px 'Manrope',sans-serif;cursor:pointer;width:100%;transition:opacity .15s;}
+.print-btn:hover{opacity:.88;}
+#printReport{display:none;}
+@media print{
+  @page{size:A4;margin:15mm 18mm;}
+  html,body{background:#fff!important;padding:0!important;margin:0!important;}
+  body>.wrap{display:none!important;}
+  footer.note{display:none!important;}
+  #printReport{display:block!important;}
+}
+footer.note{max-width:720px;margin:20px auto 0;color:var(--ink-4);font-size:11px;line-height:1.6;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo-badge">
+      <img class="logo" src="https://inmobiliariacaraballo.com/wp-content/uploads/2022/03/Logo-Inmobiliaria-Caraballo-fondo-transparente.png" alt="Inmobiliaria Caraballo"
+        onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font:800 18px Manrope,sans-serif;color:#082d74\'>Inmobiliaria Caraballo</span>'">
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Datos de la compra</div>
+    <div class="grid grid-2">
+      <div class="field">
+        <label>Precio de la vivienda</label>
+        <input type="number" id="precio" min="0" step="1000" value="0">
+      </div>
+      <div class="field">
+        <label>Tipo de vivienda</label>
+        <div class="seg" id="segTipo">
+          <button data-v="segunda" class="on">Segunda mano</button>
+          <button data-v="nueva">Obra nueva</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-3" style="margin-top:14px;">
+      <div class="field" id="fieldItp">
+        <label>ITP (%)</label>
+        <input type="number" id="itp" value="7" min="0" max="20" step="0.5">
+        <div class="hint">Segunda mano — Andalucía 7%</div>
+      </div>
+      <div class="field" id="fieldIva" style="display:none;">
+        <label>IVA (%)</label>
+        <input type="number" id="iva" value="10" min="0" max="21" step="1">
+        <div class="hint">Obra nueva — general 10%</div>
+      </div>
+      <div class="field" id="fieldAjd" style="display:none;">
+        <label>AJD (%)</label>
+        <input type="number" id="ajd" value="1.2" min="0" max="5" step="0.1">
+        <div class="hint">Andalucía 1,2%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Modalidad de compra</div>
+    <div class="seg" id="segModalidad">
+      <button data-v="hipoteca" class="on">Con hipoteca</button>
+      <button data-v="contado">Al contado</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Gastos e honorarios</div>
+    <div class="grid grid-3">
+      <div class="field"><label>Notaría (€)</label><input type="number" id="notaria" value="650" min="0" step="50"></div>
+      <div class="field"><label>Registro (€)</label><input type="number" id="registro" value="650" min="0" step="50"></div>
+      <div class="field" id="fieldGestoria"><label>Gestoría (€)</label><input type="number" id="gestoria" value="500" min="0" step="50"></div>
+      <div class="field" id="fieldTasacion"><label>Tasación (€)</label><input type="number" id="tasacion" value="400" min="0" step="50"></div>
+      <div class="field"><label>Honorarios (€)</label><input type="number" id="honorarios" value="0" min="0" step="100"><div class="hint">Sin IVA</div></div>
+      <div class="field"><label>IVA honorarios (%)</label><input type="number" id="honorariosIva" value="21" min="0" max="21" step="1"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Resumen</div>
+    <div class="band">
+      <div><div class="bl">Precio de la vivienda</div><div class="bv" id="rPrecio">—</div></div>
+      <div><div class="bl">Coste total de la operación</div><div class="bv" id="rCosteTotal">—</div></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi main"><div class="kl">Total gastos</div><div class="kv" id="rGastosTotal">—</div></div>
+      <div class="kpi"><div class="kl">% sobre el precio</div><div class="kv" id="rPct">—</div></div>
+    </div>
+    <table class="tabla">
+      <thead><tr><td colspan="2" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#082d74;padding-bottom:6px;border-bottom:2px solid #c5cbdf;">Desglose completo</td></tr></thead>
+      <tbody id="tbDesglose"></tbody>
+    </table>
+    <div class="aviso" id="avisoAhorro"></div>
+  </div>
+
+  <button class="print-btn" id="btnImprimir">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><rect x="6" y="13" width="12" height="9" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg>
+    Imprimir / Guardar PDF
+  </button>
+
+  <footer class="note">Estudio orientativo. Impuestos calculados con los tipos vigentes en Andalucía. Los gastos de notaría, registro y gestoría son estimaciones basadas en baremos orientativos.</footer>
+</div>
+
+<div id="printReport"></div>
+
+<script>
+(()=>{
+  const $=id=>document.getElementById(id);
+  const eur=n=>new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+  const pct=(n,d=1)=>n.toFixed(d).replace('.',',');
+  const num=id=>parseFloat($(id).value)||0;
+
+  function initSeg(segId,onChange){
+    document.querySelectorAll(`#${segId} button`).forEach(b=>{
+      b.addEventListener('click',()=>{
+        document.querySelectorAll(`#${segId} button`).forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        onChange(b.dataset.v);
+      });
+    });
+  }
+  function segVal(segId){
+    const b=document.querySelector(`#${segId} button.on`);
+    return b?b.dataset.v:null;
+  }
+
+  function mostrarTipo(tipo){
+    $('fieldItp').style.display=tipo==='segunda'?'':'none';
+    $('fieldIva').style.display=tipo==='nueva'?'':'none';
+    $('fieldAjd').style.display=tipo==='nueva'?'':'none';
+  }
+
+  function mostrarModalidad(mod){
+    const contado=mod==='contado';
+    $('fieldGestoria').style.opacity=contado?'0.35':'1';
+    $('fieldGestoria').style.pointerEvents=contado?'none':'';
+    $('fieldTasacion').style.opacity=contado?'0.35':'1';
+    $('fieldTasacion').style.pointerEvents=contado?'none':'';
+  }
+
+  initSeg('segTipo',v=>{mostrarTipo(v);calc();});
+  initSeg('segModalidad',v=>{mostrarModalidad(v);calc();});
+  mostrarTipo('segunda');
+  mostrarModalidad('hipoteca');
+
+  ['precio','itp','iva','ajd','notaria','registro','gestoria','tasacion','honorarios','honorariosIva'].forEach(id=>{
+    $(id).addEventListener('input',calc);
+  });
+
+  let E=null;
+
+  function actualizarBaremo(precio){
+    if(precio <= 0) return;
+    const b = baremoCV(precio);
+    // Solo rellenar automáticamente si el usuario no ha editado manualmente
+    if(!manualEdit.notaria){
+      $('notaria').value = b.not;
+      $('hintNotaria').textContent = '✓ Según baremo';
+    }
+    if(!manualEdit.registro){
+      $('registro').value = b.reg;
+      $('hintRegistro').textContent = '✓ Según baremo';
+    }
+    if(!manualEdit.gestoria){
+      $('gestoria').value = b.ges;
+      $('hintGestoria').textContent = '✓ Según baremo';
+    }
+  }
+
+  function calc(){
+    const precio=num('precio');
+    const tipo=segVal('segTipo')||'segunda';
+    const modalidad=segVal('segModalidad')||'hipoteca';
+    const contado=modalidad==='contado';
+
+    let impuesto=0,impDet=[];
+    if(tipo==='segunda'){
+      const p=num('itp');impuesto=precio*p/100;
+      impDet=[{l:`ITP ${pct(p)}%`,v:impuesto}];
+    } else {
+      const iv=num('iva'),aj=num('ajd');
+      const ivaA=precio*iv/100,ajdA=precio*aj/100;
+      impuesto=ivaA+ajdA;
+      impDet=[{l:`IVA ${pct(iv)}%`,v:ivaA},{l:`AJD ${pct(aj,2)}%`,v:ajdA}];
+    }
+
+    const not=num('notaria');
+    const reg=num('registro');
+    const ges=contado?0:num('gestoria');
+    const tas=contado?0:num('tasacion');
+    const hB=num('honorarios'),hIp=num('honorariosIva'),hIA=hB*hIp/100,hT=hB+hIA;
+    const gastosTotal=impuesto+not+reg+ges+tas+hT;
+    const costeTotal=precio+gastosTotal;
+    const pp=precio>0?gastosTotal/precio*100:0;
+    E={precio,tipo,modalidad,contado,impuesto,impDet,not,reg,ges,tas,hB,hIp,hIA,hT,gastosTotal,costeTotal,pp};
+
+    $('rPrecio').textContent=eur(precio);
+    $('rCosteTotal').textContent=eur(costeTotal);
+    $('rGastosTotal').textContent=eur(gastosTotal);
+    $('rPct').textContent=pct(pp)+'%';
+
+    let rows=`<tr><td>${tipo==='segunda'?'Precio de la vivienda (segunda mano)':'Precio de la vivienda (obra nueva)'}</td><td>${eur(precio)}</td></tr>`;
+    impDet.forEach(d=>{rows+=`<tr><td>${d.l}</td><td>${eur(d.v)}</td></tr>`;});
+    rows+=`<tr><td>Notaría</td><td>${eur(not)}</td></tr>`;
+    rows+=`<tr><td>Registro de la Propiedad</td><td>${eur(reg)}</td></tr>`;
+    if(!contado) rows+=`<tr><td>Gestoría</td><td>${eur(ges)}</td></tr>`;
+    if(!contado) rows+=`<tr><td>Tasación</td><td>${eur(tas)}</td></tr>`;
+    if(hB>0) rows+=`<tr><td>Honorarios agencia <span class="muted">(${eur(hB)} + ${pct(hIp,0)}% IVA)</span></td><td>${eur(hT)}</td></tr>`;
+    rows+=`<tr class="sub"><td>Total gastos e impuestos <span class="muted">(${pct(pp)}% del precio)</span></td><td>${eur(gastosTotal)}</td></tr>`;
+    rows+=`<tr style="font-weight:800;font-size:14px;color:#082d74;"><td style="padding-top:8px;">Coste total de la operación</td><td style="padding-top:8px;">${eur(costeTotal)}</td></tr>`;
+    $('tbDesglose').innerHTML=rows;
+    const avisoTxt=contado
+      ?`Al comprar al contado necesitas tener disponibles al menos <b>${eur(gastosTotal)}</b> adicionales al precio (${pct(pp)}% del precio) para cubrir impuestos y gastos.`
+      :`Para afrontar los gastos de compra necesitas tener ahorrados al menos <b>${eur(gastosTotal)}</b> (${pct(pp)}% del precio), al margen de la entrada de la hipoteca.`;
+    $('avisoAhorro').innerHTML=avisoTxt;
+  }
+
+  function buildReport(){
+    if(!E) calc();
+    const e=E;
+    const hoy=new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+    const logo=document.querySelector('.logo');
+    const logoSrc=logo&&logo.complete&&logo.naturalWidth>0?logo.src:'';
+    let impRows='';
+    e.impDet.forEach(d=>{impRows+=`<tr><td>${d.l}</td><td>${eur(d.v)}</td></tr>`;});
+    let honRow='';
+    if(e.hB>0) honRow=`<tr><td>Honorarios agencia (${eur(e.hB)} + ${pct(e.hIp,0)}% IVA)</td><td>${eur(e.hT)}</td></tr>`;
+
+    return `
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Manrope',system-ui,sans-serif;color:#10132a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.rp{font-size:11pt;line-height:1.45;padding:14mm 16mm;}
+.rp-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #082d74;margin-bottom:16px;}
+.rp-head img{height:52px;}
+.rp-head .fecha{font-size:10pt;color:#565c78;}
+.rp-band{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#082d74;color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:14px;}
+.rp-band .l{font-size:8pt;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.75;}
+.rp-band .v{font-size:17pt;font-weight:800;margin-top:4px;}
+.rp-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.rp-kpi{border:1px solid #e0e3f0;border-radius:9px;padding:12px 14px;background:#f4f5fb;}
+.rp-kpi .l{font-size:8pt;text-transform:uppercase;letter-spacing:.03em;font-weight:700;color:#565c78;}
+.rp-kpi .v{font-size:19pt;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums;}
+.rp-kpi.main{background:#082d74;border-color:#082d74;color:#fff;}
+.rp-kpi.main .l{color:rgba(255,255,255,.75);}
+h2{font-size:8pt;font-weight:800;color:#082d74;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid #e0e3f0;}
+table{width:100%;border-collapse:collapse;}
+td{padding:8px 0;border-bottom:1px solid #edeff8;font-size:11pt;}
+td:last-child{text-align:right;font-weight:700;white-space:nowrap;}
+tr.sub td{font-weight:800;border-bottom:2px solid #c9cee3;font-size:12pt;}
+tr.tot td{font-weight:800;font-size:14pt;color:#082d74;border-bottom:none;padding-top:8px;}
+.nota{background:#f4f5fb;border-left:3px solid #082d74;border-radius:6px;padding:10px 13px;font-size:9.5pt;color:#3a3f5c;margin-top:14px;line-height:1.45;}
+.nota b{color:#082d74;}
+.foot{margin-top:20px;padding-top:8px;border-top:1px solid #e0e3f0;font-size:7.5pt;color:#8890ac;line-height:1.4;display:flex;justify-content:space-between;gap:14px;}
+</style>
+<div class="rp">
+  <div class="rp-head">
+    ${logoSrc?`<img src="${logoSrc}" alt="Inmobiliaria Caraballo">`:'<b style="font-size:14pt;color:#082d74;">Inmobiliaria Caraballo</b>'}
+    <div class="fecha">Sevilla, ${hoy}</div>
+  </div>
+  <div class="rp-band">
+    <div><div class="l">Precio de la vivienda</div><div class="v">${eur(e.precio)}</div></div>
+    <div><div class="l">Coste total de la operación</div><div class="v">${eur(e.costeTotal)}</div></div>
+  </div>
+  <div class="rp-kpis">
+    <div class="rp-kpi main"><div class="l">Total gastos</div><div class="v">${eur(e.gastosTotal)}</div></div>
+    <div class="rp-kpi"><div class="l">% sobre el precio</div><div class="v">${pct(e.pp)}%</div></div>
+  </div>
+  <h2>Desglose de gastos e impuestos</h2>
+  <table>
+    <tr><td>${e.tipo==='segunda'?'Precio de la vivienda (segunda mano)':'Precio de la vivienda (obra nueva)'}</td><td>${eur(e.precio)}</td></tr>
+    ${impRows}
+    <tr><td>Notaría</td><td>${eur(e.not)}</td></tr>
+    <tr><td>Registro de la Propiedad</td><td>${eur(e.reg)}</td></tr>
+    ${e.contado?'':'<tr><td>Gestoría</td><td>'+eur(e.ges)+'</td></tr>'}
+    ${e.contado?'':'<tr><td>Tasación</td><td>'+eur(e.tas)+'</td></tr>'}
+    ${honRow}
+    <tr class="sub"><td>Total gastos e impuestos (${pct(e.pp)}% del precio)</td><td>${eur(e.gastosTotal)}</td></tr>
+    <tr class="tot"><td>Coste total de la operación</td><td>${eur(e.costeTotal)}</td></tr>
+  </table>
+  <div class="nota">${e.contado?'Al comprar al contado necesitas tener disponibles al menos <b>'+eur(e.gastosTotal)+'</b> adicionales al precio ('+pct(e.pp)+'% del precio) para cubrir impuestos y gastos.':'Para afrontar los gastos de compra necesitas tener ahorrados al menos <b>'+eur(e.gastosTotal)+'</b> ('+pct(e.pp)+'% del precio), al margen de la entrada de la hipoteca.'}</div>
+  <div class="foot">
+    <div>Estudio orientativo sin valor contractual. Impuestos calculados con los tipos vigentes en Andalucía a la fecha del estudio. Los gastos de notaría, registro y gestoría son estimaciones basadas en baremos orientativos.</div>
+    <div style="text-align:right;white-space:nowrap;"><b>Inmobiliaria Caraballo</b><br>Sevilla</div>
+  </div>
+</div>`;
+  }
+
+  $('btnImprimir').addEventListener('click',()=>{
+    calc();
+    $('printReport').innerHTML=buildReport();
+    setTimeout(()=>window.print(),100);
+  });
+
+  calc();
+})();
+</script>
+</body>
+</html>
