@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#082d74">
+<title>Regularizar la Vivienda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera con regla + "mira estos dos papeles" + selector de 3 problemas (tarjetas grandes) + preguntas del caso / resultado paso a paso + desplegables */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#141B26; --muted:#556072; --line:#D5DBE4;
+  --accent:#24508F; --accent-soft:#E2EAF5; --tape:#B8761A; --tape-soft:#F7ECDC;
+  --warn:#8A5300; --warn-soft:#FBEFD8; --bad:#9E2F2A; --bad-soft:#F8E2DF; --ok:#2B663B; --ok-soft:#E1EFE4;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E131B; --surface:#151C27; --ink:#E4E9F0; --muted:#9AA6B6; --line:#283244;
+  --accent:#86AEE6; --accent-soft:#1B2A40; --tape:#E3A956; --tape-soft:#3A2B16;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131B; --surface:#151C27; --ink:#E4E9F0; --muted:#9AA6B6; --line:#283244;
+  --accent:#86AEE6; --accent-soft:#1B2A40; --tape:#E3A956; --tape-soft:#3A2B16;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:52px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.1rem,5vw,3.2rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,3vw,1.95rem)}
+h3{font-size:1.18rem}
+p{margin:0}
+a{color:var(--accent)}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:.86rem}
+.num{font-variant-numeric:tabular-nums}
+.sec{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+
+header{display:flex;flex-direction:column;gap:16px;border-bottom:1px solid var(--line);padding-bottom:28px}
+.ruler{height:16px;opacity:.75;background:
+  repeating-linear-gradient(90deg,var(--tape) 0 1px,transparent 1px 10px) bottom/100% 7px no-repeat,
+  repeating-linear-gradient(90deg,var(--tape) 0 2px,transparent 2px 50px) bottom/100% 16px no-repeat}
+header .lead{font-size:1.12rem;max-width:62ch;color:var(--muted)}
+
+.papers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;align-items:start}
+.pcol{display:flex;flex-direction:column;gap:12px}
+.paper{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:6px}
+.paper p{font-size:.93rem}
+.lookup{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.lookup table{border-collapse:collapse;width:100%;font-size:.92rem}
+.lookup td,.lookup th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.lookup th{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lookup tr:last-child td{border-bottom:none}
+.quote{font-family:var(--mono);font-size:.84rem;background:var(--bg);padding:2px 6px;border-radius:4px}
+.go{font-weight:700;color:var(--accent);white-space:nowrap}
+
+.picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pick{position:relative;display:block;cursor:pointer}
+.pick input{position:absolute;opacity:0;pointer-events:none}
+.pick .box{height:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s, background .15s}
+.pick .letter{font-family:var(--mono);font-size:.8rem;font-weight:500;color:var(--tape)}
+.pick .box h3{font-size:1.15rem}
+.pick .box p{font-size:.88rem;color:var(--muted)}
+.pick:hover .box{border-color:var(--accent)}
+.pick input:checked + .box{border-color:var(--accent);background:var(--accent-soft)}
+.pick input:focus-visible + .box{outline:2px solid var(--accent);outline-offset:2px}
+
+.tool{display:grid;grid-template-columns:minmax(0,350px) minmax(0,1fr);gap:28px;align-items:start}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.88rem;font-weight:600}
+.help{font-size:.78rem;color:var(--muted);line-height:1.35}
+select,input[type=number]{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+select:focus-visible,input:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;line-height:1.35}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.grp{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.grp-t{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.btn{align-self:flex-start;font:inherit;font-size:.84rem;font-weight:600;background:none;border:1px solid var(--line);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.out{display:flex;flex-direction:column;gap:22px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:.82rem;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.ok{background:var(--ok-soft);color:var(--ok)}
+.big{display:flex;flex-wrap:wrap;gap:28px}
+.big div{display:flex;flex-direction:column}
+.big b{font-family:var(--display);font-size:2rem;font-weight:600;line-height:1.1}
+.big span{font-size:.82rem;color:var(--muted)}
+.alert{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 8px 8px 0;font-size:.92rem}
+.alert.warn{border-color:var(--warn);background:var(--warn-soft)} .alert.bad{border-color:var(--bad);background:var(--bad-soft)} .alert.ok{border-color:var(--ok);background:var(--ok-soft)}
+.alert b{display:block;margin-bottom:2px}
+.alerts{display:flex;flex-direction:column;gap:10px}
+.sell{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sell div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+.sell .y{border-color:var(--ok);background:var(--ok-soft)} .sell .m{border-color:var(--warn);background:var(--warn-soft)} .sell .n{border-color:var(--bad);background:var(--bad-soft)}
+
+ol.route{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;counter-reset:paso}
+ol.route > li{counter-increment:paso;display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;padding:18px 0;border-bottom:1px solid var(--line)}
+ol.route > li:last-child{border-bottom:none}
+ol.route > li::before{content:counter(paso);font-family:var(--display);font-size:1.25rem;font-weight:600;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center}
+ol.route h3{font-size:1.12rem;margin-bottom:4px}
+ol.route p{font-size:.94rem}
+ol.route ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:3px}
+.lleva{font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+
+table.costs{border-collapse:collapse;width:100%;font-size:.92rem}
+.tbl{overflow-x:auto}
+.costs th,.costs td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.costs th{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.costs td.r,.costs th.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.costs tr.sub td{font-weight:700;border-top:2px solid var(--ink)}
+
+.matrix{border-collapse:collapse;width:100%;font-size:.88rem;min-width:860px}
+.matrix th,.matrix td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.matrix thead th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--surface);position:sticky;top:0}
+.matrix tbody th{font-weight:600;font-size:.9rem;min-width:200px}
+.matrix tr.grp td{background:var(--bg);font-family:var(--mono);font-size:.78rem;color:var(--tape);font-weight:500;padding:6px 8px}
+.matrix td.cost{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600}
+.mwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 10px}
+.yn{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.yn.si{background:var(--accent-soft);color:var(--accent)} .yn.no{background:var(--ok-soft);color:var(--ok)} .yn.op{background:var(--warn-soft);color:var(--warn)} .yn.tax{background:var(--bad-soft);color:var(--bad)}
+.yn + small{display:block;color:var(--muted);font-size:.78rem;line-height:1.3;margin-top:3px}
+.who{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.who div{background:var(--surface);padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.who .k{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.who .yn{align-self:flex-start}
+.who small{font-size:.8rem;color:var(--muted);line-height:1.35}
+.solo{font-size:.9rem;font-weight:600;color:var(--ok)}
+@media (max-width:760px){ .who{grid-template-columns:1fr 1fr} }
+@media (max-width:420px){ .who{grid-template-columns:1fr} }
+.lib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 28px;align-items:start}
+.lib > div{display:flex;flex-direction:column;gap:12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details[open]{border-color:var(--accent)}
+summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:600;position:relative;line-height:1.35}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.dc{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:.94rem}
+.dc ul,.dc ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+.dc pre{margin:0;font-family:var(--mono);font-size:.82rem;line-height:1.55;white-space:pre-wrap;background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:12px;user-select:all}
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted);max-width:80ch}
+
+@media (max-width:900px){
+  .papers{grid-template-columns:1fr}
+  .picker{grid-template-columns:1fr}
+  .tool{grid-template-columns:1fr}
+  .form{position:static;max-height:none}
+  .lib{grid-template-columns:1fr}
+}
+@media (max-width:460px){ .row2{grid-template-columns:1fr} .sell{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.ck{display:flex;flex-direction:column;gap:18px}
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ck-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;min-width:0}
+.ck-n{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.ck-item h3{font-size:1.02rem;margin:0 0 3px}
+.ck-item p{font-size:.88rem;margin:0}
+.ck-item a{font-size:.84rem;font-weight:600}
+.ck-item .here{font-size:.8rem;color:var(--muted)}
+.ck-docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.ck-docs ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+@media (max-width:900px){ .ck-grid{grid-template-columns:1fr} .ck-docs{grid-template-columns:1fr} }
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>.backbar{display:flex;margin-bottom:-28px}.backbar a{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;font-weight:700;color:#082d74;text-decoration:none;background:#fff;border:1px solid #e0e3f0;border-radius:999px;padding:7px 14px;box-shadow:0 1px 2px rgba(16,19,42,.05)}.backbar a:hover{border-color:#b9c2de}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .backbar a{background:#1b2030;color:#cfd8f5;border-color:#2c3348}}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="backbar"><a href="index.html">‹ Herramientas</a></div>
+
+<header>
+  <div class="ruler" aria-hidden="true"></div>
+  <div class="eyebrow">Casas · Sevilla y Andalucía · octubre 2026</div>
+  <h1>Cuando la casa no coincide con el Registro</h1>
+  <p class="lead">Los tres problemas que más aparecen al vender una casa: que siga como solar o en construcción, que tenga una obra sin declarar, o que el Registro diga menos metros de los que tiene. Elige el tuyo y te damos el paso a paso.</p>
+</header>
+
+<section class="sec" aria-labelledby="t1">
+  <div class="sec-head">
+    <div class="eyebrow">Antes de nada</div>
+    <h2 id="t1">Pide estos dos papeles y compáralos</h2>
+  </div>
+  <div class="papers">
+    <div class="pcol">
+      <div class="paper">
+        <h3>Nota simple del Registro</h3>
+        <p>Dice cómo está inscrita la casa: si es solar, si está en construcción, cuántas plantas y cuántos metros. Unos 9 €, por internet en registradores.org.</p>
+      </div>
+      <div class="paper">
+        <h3>Certificación catastral</h3>
+        <p>Dice lo que tiene el Catastro: metros construidos, plantas y el <b>año de construcción</b>, que sirve para demostrar la antigüedad. Gratis en la sede del Catastro con la referencia del recibo del IBI.</p>
+      </div>
+      <p class="small muted">Compara las dos con lo que ves en la casa. Si las tres cosas coinciden, no hay que hacer nada.</p>
+    </div>
+    <div class="lookup">
+      <div class="tbl"><table>
+        <thead><tr><th>Si la nota simple dice…</th><th>Qué le pasa</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="quote">Urbana: solar</span> o <span class="quote">parcela de terreno</span></td><td>La casa no está declarada. Para el Registro, ahí no hay nada construido.</td><td class="go">Caso A</td></tr>
+          <tr><td><span class="quote">vivienda en construcción</span> u <span class="quote">obra nueva en construcción</span></td><td>Se declaró al empezar la obra, pero nunca se hizo el acta de fin de obra.</td><td class="go">Caso A</td></tr>
+          <tr><td><span class="quote">vivienda de una planta</span> y la casa tiene dos</td><td>La segunda planta no está declarada.</td><td class="go">Caso B</td></tr>
+          <tr><td>Menos metros construidos que el Catastro o la realidad, porque se amplió la cocina, se cubrió el patio o se hizo una cochera</td><td>Hay una ampliación sin declarar.</td><td class="go">Caso B</td></tr>
+          <tr><td>Menos metros de parcela o de casa, sin que se haya hecho ninguna obra</td><td>Se midió mal en su día.</td><td class="go">Caso C</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="tm">
+  <div class="sec-head">
+    <div class="eyebrow">Quién hace falta</div>
+    <h2 id="tm">¿Notario, arquitecto, Ayuntamiento? Caso por caso</h2>
+    <p class="muted">El <b>notario y el Registro</b> intervienen casi siempre. El <b>técnico</b> (arquitecto o aparejador) solo hace falta cuando no hay un papel que ya demuestre cómo es la casa. El <b>Ayuntamiento</b>, cuando la obra es reciente o falta la licencia de ocupación. Si sale <span class="yn no">No</span> en técnico y Ayuntamiento, <b>lo resuelve todo la notaría</b>.</p>
+  </div>
+  <div class="mwrap"><table class="matrix">
+    <thead><tr><th>Situación</th><th>Técnico</th><th>Ayuntamiento</th><th>Notario</th><th>Registro</th><th>Impuestos</th><th>Coste total aprox.</th></tr></thead>
+    <tbody><tr class="grp"><td colspan="7">A · La casa sale como solar o en construcción</td></tr><tr><th scope="row">En construcción, con licencia y certificado final de obra</th><td><span class="yn no">No</span><small>Ya tenéis el final de obra</small></td><td><span class="yn op">Solo si falta</span><small>Declaración de ocupación</small></td><td><span class="yn si">Sí</span><small>Acta de fin de obra</small></td><td><span class="yn si">Sí</span></td><td><span class="yn no">No</span><small>El AJD se pagó al empezar</small></td><td class="cost">360 – 1.170 €</td></tr><tr><th scope="row">En construcción, con licencia pero sin certificado final</th><td><span class="yn si">Sí</span><small>Firma el final de obra</small></td><td><span class="yn si">Sí</span><small>Declaración de ocupación</small></td><td><span class="yn si">Sí</span><small>Acta de fin de obra</small></td><td><span class="yn si">Sí</span></td><td><span class="yn no">No</span></td><td class="cost">650 – 2.400 €</td></tr><tr><th scope="row">Sin licencia, terminada hace más de 6 años, y el Catastro ya la recoge</th><td><span class="yn no">No</span><small>Vale la certificación catastral</small></td><td><span class="yn op">Opcional</span><small>Certificado sin expediente</small></td><td><span class="yn si">Sí</span><small>Obra nueva por antigüedad</small></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Si era solar</span><small>AJD 1,2 % del coste de construir</small></td><td class="cost">Solar 160 m²: 1.850 – 2.560 €<br>En construcción: 310 – 870 €</td></tr><tr><th scope="row">Sin licencia, más de 6 años, y el Catastro no la recoge bien</th><td><span class="yn si">Sí</span><small>Certifica descripción y año</small></td><td><span class="yn op">Opcional</span></td><td><span class="yn si">Sí</span><small>Obra nueva por antigüedad</small></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Si era solar</span><small>AJD 1,2 %</small></td><td class="cost">Solar 160 m²: 2.250 – 3.560 €</td></tr><tr><th scope="row">Sin licencia, terminada hace menos de 6 años</th><td><span class="yn si">Sí</span><small>Proyecto de legalización</small></td><td><span class="yn si">Sí</span><small>Licencia, ICIO y posible multa</small></td><td><span class="yn si">Sí</span></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Sí</span><small>ICIO ≈ 4 % + AJD 1,2 % si era solar</small></td><td class="cost">8.000 – 14.000 € (160 m²)</td></tr><tr class="grp"><td colspan="7">B · Tiene una obra sin declarar (planta, cocina, patio, cochera)</td></tr><tr><th scope="row">Con licencia y certificado final de obra</th><td><span class="yn no">No</span></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span><small>Escritura de ampliación</small></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Sí</span><small>AJD 1,2 % del coste de la obra</small></td><td class="cost">Planta 45 m²: 790 – 1.290 €</td></tr><tr><th scope="row">Sin licencia, más de 6 años, y el Catastro ya la recoge</th><td><span class="yn no">No</span><small>Vale la certificación catastral</small></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span><small>Ampliación por antigüedad</small></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Sí</span><small>AJD 1,2 % del coste de la obra</small></td><td class="cost">Planta 45 m²: 790 – 1.290 €</td></tr><tr><th scope="row">Sin licencia, más de 6 años, y el Catastro no la recoge</th><td><span class="yn si">Sí</span><small>Certifica la obra y su año</small></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span><small>Ampliación por antigüedad</small></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Sí</span><small>AJD 1,2 %</small></td><td class="cost">Planta 45 m²: 1.190 – 2.190 €</td></tr><tr><th scope="row">Sin licencia, menos de 6 años</th><td><span class="yn si">Sí</span><small>Proyecto de legalización</small></td><td><span class="yn si">Sí</span><small>Licencia, ICIO y posible multa</small></td><td><span class="yn si">Sí</span></td><td><span class="yn si">Sí</span></td><td><span class="yn tax">Sí</span><small>ICIO ≈ 4 % + AJD 1,2 %</small></td><td class="cost">Planta 45 m²: 3.000 – 6.000 €</td></tr><tr class="grp"><td colspan="7">C · Salen menos metros sin haber obras</td></tr><tr><th scope="row">Parcela: menos del 5 % de diferencia</th><td><span class="yn no">No</span></td><td><span class="yn no">No</span></td><td><span class="yn op">En la próxima firma</span><small>Se corrige en la venta o la herencia</small></td><td><span class="yn si">Sí</span></td><td><span class="yn no">No</span></td><td class="cost">Casi nada</td></tr><tr><th scope="row">Parcela: 5–10 % y el Catastro coincide con la realidad</th><td><span class="yn no">No</span></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span><small>Rectificación con el Catastro</small></td><td><span class="yn si">Sí</span></td><td><span class="yn no">No</span></td><td class="cost">260 – 720 €</td></tr><tr><th scope="row">Parcela: más del 10 % y el Catastro coincide</th><td><span class="yn no">No</span></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span><small>Expediente con aviso a vecinos</small></td><td><span class="yn si">Sí</span></td><td><span class="yn no">No</span></td><td class="cost">510 – 1.120 €</td></tr><tr><th scope="row">Parcela: el Catastro tampoco coincide</th><td><span class="yn si">Sí</span><small>Plano georreferenciado</small></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span></td><td><span class="yn si">Sí</span></td><td><span class="yn no">No</span></td><td class="cost">+ 250 – 500 € del técnico</td></tr><tr><th scope="row">Casa construida: mide más sin haber obras</th><td><span class="yn si">Sí</span><small>Mide y certifica</small></td><td><span class="yn no">No</span></td><td><span class="yn si">Sí</span><small>Rectificación</small></td><td><span class="yn si">Sí</span></td><td><span class="yn op">Posible</span><small>Si el notario lo trata como ampliación</small></td><td class="cost">610 – 1.420 €</td></tr></tbody>
+  </table></div>
+  <p class="small muted">Costes con nota simple, notaría, Registro, técnico e impuestos, con un coste de construcción de 700 €/m². Rellena tu caso abajo para afinarlo.</p>
+</section>
+
+<section class="sec" aria-labelledby="t2">
+  <div class="sec-head">
+    <div class="eyebrow">Tu caso</div>
+    <h2 id="t2">¿Qué le pasa a la casa?</h2>
+    <p class="muted">Si le pasan varias cosas (por ejemplo, está en construcción y además se amplió), se arreglan juntas en la misma escritura. Empieza por la primera de la lista que le pase.</p>
+  </div>
+
+  <div class="picker" role="radiogroup" aria-label="Elige el problema">
+    <label class="pick"><input type="radio" name="caso" value="A" id="casoA"><span class="box"><span class="letter">CASO A</span><h3>Sale como solar o en construcción</h3><p>La casa está hecha, pero en el Registro no consta como terminada.</p></span></label>
+    <label class="pick"><input type="radio" name="caso" value="B" id="casoB"><span class="box"><span class="letter">CASO B</span><h3>Tiene una obra sin declarar</h3><p>Segunda planta, cocina ampliada al patio, patio cubierto, cochera, almacén…</p></span></label>
+    <label class="pick"><input type="radio" name="caso" value="C" id="casoC"><span class="box"><span class="letter">CASO C</span><h3>Salen menos metros sin haber obras</h3><p>El Registro dice menos superficie de parcela o de casa de la que hay.</p></span></label>
+  </div>
+
+  <div class="tool">
+    <form class="form" id="f" onsubmit="return false">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <h3 id="fTitle">Datos</h3>
+        <button type="button" class="btn" id="btnReset">Ejemplo</button>
+      </div>
+
+      <div class="field" id="wReg">
+        <label for="reg">¿Qué dice exactamente la nota simple?</label>
+        <select id="reg">
+          <option value="solar">Solar o parcela (no hay casa)</option>
+          <option value="construccion">Vivienda u obra nueva en construcción</option>
+        </select>
+      </div>
+
+      <div class="field" id="wTipoObra">
+        <label for="tipoObra">¿Qué obra es?</label>
+        <select id="tipoObra">
+          <option value="planta">Segunda planta o una planta más</option>
+          <option value="cocina">Ampliación de cocina, salón o dormitorio (hacia el patio)</option>
+          <option value="patio">Patio cubierto o cerrado</option>
+          <option value="cochera">Cochera, almacén o trastero</option>
+          <option value="piscina">Piscina</option>
+        </select>
+      </div>
+
+      <div class="field" id="wLic">
+        <label for="lic">¿Tiene licencia?</label>
+        <select id="lic">
+          <option value="lic">Sí, con licencia de obra</option>
+          <option value="ant">No, pero se terminó hace más de 6 años</option>
+          <option value="rec">No, y se terminó hace menos de 6 años</option>
+          <option value="nose">No lo sé</option>
+        </select>
+        <span class="help">Pasados 6 años desde que se terminó una obra sin licencia, en Andalucía ya no se puede mandar derribar (salvo en suelo protegido).</span>
+      </div>
+
+      <div class="field" id="wCatObra">
+        <label for="catObra">¿El Catastro ya recoge la obra con su año y sus metros?</label>
+        <select id="catObra">
+          <option value="si">Sí, la certificación catastral la describe bien</option>
+          <option value="no">No, o no coincide</option>
+          <option value="nose">No lo sé</option>
+        </select>
+        <span class="help">Si la recoge y el año tiene más de 6 años, el notario puede declararla solo con la certificación catastral: no hace falta técnico.</span>
+      </div>
+
+      <div class="field" id="wFinal">
+        <label for="final">¿Tenéis el certificado final de obra del arquitecto?</label>
+        <select id="final">
+          <option value="si">Sí</option>
+          <option value="no">No, o no lo encontramos</option>
+        </select>
+      </div>
+
+      <div class="field" id="wDiez">
+        <label for="diez">¿Cuándo se terminó la casa?</label>
+        <select id="diez">
+          <option value="mas10">Hace más de 10 años</option>
+          <option value="menos10">Hace menos de 10 años</option>
+        </select>
+        <span class="help">Importa para el seguro decenal si se vende.</span>
+      </div>
+
+      <div class="row2" id="wM2">
+        <div class="field"><label for="m2" id="m2Label">m² de la obra</label><input type="number" id="m2" min="0" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="eur">Coste €/m²</label><input type="number" id="eur" min="0" step="10" inputmode="numeric"></div>
+      </div>
+      <span class="help" id="hM2">Lo que costaría construirla hoy. En Sevilla, 650–850 €/m². Sirve para calcular el impuesto.</span>
+
+      <div id="wC" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field">
+          <label for="queC">¿Qué sale de menos?</label>
+          <select id="queC">
+            <option value="parcela">Los metros de la parcela (el terreno)</option>
+            <option value="casa">Los metros construidos de la casa</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="mReg">m² en el Registro</label><input type="number" id="mReg" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="mReal">m² reales</label><input type="number" id="mReal" min="0" step="1" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <label for="cat">¿El Catastro coincide con los metros reales?</label>
+          <select id="cat">
+            <option value="si">Sí</option>
+            <option value="no">No</option>
+            <option value="nose">No lo sé</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grp">
+        <div class="grp-t">Más datos</div>
+        <div class="field">
+          <label for="suelo">Suelo</label>
+          <select id="suelo">
+            <option value="urbano">Urbano (dentro del pueblo o ciudad)</option>
+            <option value="rustico">Rústico (campo, parcela fuera del pueblo)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="venta">¿Se va a vender?</label>
+          <select id="venta">
+            <option value="no">No, de momento</option>
+            <option value="contado">Sí, comprador al contado</option>
+            <option value="hipoteca">Sí, comprador con hipoteca</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="herencia"> Además, hay una herencia sin hacer</label>
+      </div>
+    </form>
+
+    <div class="out" id="out" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t3">
+  <div class="sec-head">
+    <div class="eyebrow">Para entenderlo mejor</div>
+    <h2 id="t3">Dudas que siempre salen</h2>
+  </div>
+  <div class="lib">
+    <div>
+      <details>
+        <summary>¿Cómo se demuestra que una obra tiene más de 6 años?</summary>
+        <div class="dc">
+          <p>Vale cualquiera de estas, y mejor si son varias:</p>
+          <ul>
+            <li><b>Certificación catastral</b> con el año de construcción o de la reforma.</li>
+            <li><b>Certificado de un técnico</b> (arquitecto o aparejador) que diga la fecha en que se terminó.</li>
+            <li><b>Fotos aéreas antiguas</b>: las ortofotos del PNOA y el visor de la Junta de Andalucía muestran la casa año a año. El técnico las adjunta.</li>
+            <li><b>Acta notarial</b> con otras pruebas (recibos, fotos fechadas, testigos).</li>
+          </ul>
+          <p>Además, el Ayuntamiento no debe tener abierto ningún expediente de disciplina urbanística sobre la casa. Se puede pedir un certificado.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Qué es el acta de fin de obra?</summary>
+        <div class="dc">
+          <p>Cuando se construye una casa, a veces se declara al empezar ("obra nueva en construcción") para poder pedir la hipoteca. Al terminar, hay que firmar ante notario un <b>acta de finalización de obra</b> para que el Registro la pase a "vivienda terminada". Mucha gente nunca lo hizo.</p>
+          <p>Es un trámite corto y barato si tienes el certificado final de obra. Si no lo tienes y la casa tiene más de 6 años, se hace por antigüedad.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Licencia de ocupación o declaración responsable</summary>
+        <div class="dc">
+          <p>Es el papel del Ayuntamiento que dice que la casa se puede habitar. En Andalucía, para viviendas que cumplen la licencia, desde 2020 suele bastar una <b>declaración responsable de ocupación</b> que se presenta con el certificado final de obra. Es más rápida que la antigua licencia. En Sevilla se presenta en la Gerencia de Urbanismo.</p>
+          <p>El notario la pide para declarar una casa terminada con licencia. En las obras por antigüedad no suele hacer falta.</p>
+        </div>
+      </details>
+      <details>
+        <summary>El seguro decenal</summary>
+        <div class="dc">
+          <p>Es un seguro que cubre los daños de estructura durante 10 años desde que se terminó la casa. Lo exige la ley para declarar una casa nueva.</p>
+          <ul>
+            <li><b>Casa con más de 10 años:</b> no hace falta.</li>
+            <li><b>Casa con menos de 10 años que se construyó el dueño para vivir él</b> (autopromotor): no hace falta mientras viva en ella. Si la vende antes de los 10 años, el comprador tiene que aceptar expresamente en la escritura que se vende sin seguro decenal, o hay que contratarlo.</li>
+            <li>Contratarlo después de construida es difícil y caro. Pregunta al notario antes de comprometer la venta.</li>
+          </ul>
+          <p>Junto al seguro, el notario puede pedir el <b>libro del edificio</b> (planos y documentación de la obra). Lo entrega el arquitecto.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Casa en suelo rústico (campo)</summary>
+        <div class="dc">
+          <p>Si el suelo es rústico <b>protegido</b> (espacios naturales, zonas inundables, cerca de ríos, vías pecuarias), las obras sin licencia <b>no prescriben nunca</b>. En suelo rústico común se aplican los 6 años, pero casi siempre el notario y el banco piden la <b>resolución de asimilado a fuera de ordenación</b> del Ayuntamiento: reconoce que la casa ya no se puede derribar. Cuesta 500–2.000 € y tarda meses.</p>
+          <p>Antes de anunciar una casa de campo, pide al Ayuntamiento un certificado urbanístico de la parcela.</p>
+        </div>
+      </details>
+    </div>
+    <div>
+      <details>
+        <summary>¿Se puede vender sin arreglarlo?</summary>
+        <div class="dc">
+          <p><b>Al contado, sí.</b> Se vende como está en el Registro (como solar, con menos metros…). El notario lo hace constar y el comprador lo asume. Ponedlo claro en las arras.</p>
+          <p><b>Con hipoteca, casi nunca.</b> El tasador solo valora lo que está en el Registro y es legal. Una casa que figura como solar se tasa como solar. Una segunda planta sin declarar no cuenta. El banco presta poco y la operación se cae.</p>
+          <p>Lo práctico: firmar arras con plazo suficiente y que el vendedor regularice antes de la escritura.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Quién paga la regularización?</summary>
+        <div class="dc">
+          <p>No hay norma. Lo normal es que pague el vendedor, porque sin arreglarlo no vende con hipoteca. Si la paga el comprador, que se note en el precio. Siempre por escrito en las arras.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Me van a cobrar atrasos de IBI?</summary>
+        <div class="dc">
+          <p>Si la obra no está en el Catastro, al darla de alta el IBI sube y el Ayuntamiento puede cobrar la diferencia de hasta 4 años atrás. Si es el Catastro quien la descubre, añade una tasa de 60 €. Si el Catastro ya la tiene (lo habitual es que salga en su certificación), no hay atrasos.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Y si además hay una herencia?</summary>
+        <div class="dc">
+          <p>Se hace todo en la misma escritura: aceptación de herencia y declaración de la obra. Se ahorra una escritura y se inscribe junto. Los pasos de la herencia están en la <a href="guia-herencia.html">Guía de la Herencia</a>.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Textos para el anuncio y las arras</summary>
+        <div class="dc">
+          <p><b>Anuncio:</b></p>
+          <pre>Casa de 2 plantas, 135 m² construidos reales. En el Registro constan 90 m²: la planta alta tiene más de 6 años y se declarará por antigüedad antes de la venta.</pre>
+          <p><b>Arras:</b></p>
+          <pre>La parte compradora conoce que en el Registro de la Propiedad la finca figura como [solar / vivienda en construcción / vivienda de ___ m²], y que la realidad es [descripción]. La parte vendedora se obliga, a su cargo, a [otorgar el acta de finalización de obra / declarar la ampliación por antigüedad / rectificar la superficie] e inscribirla antes del día __/__/____, fecha límite para la escritura. Si no fuera posible por causa no imputable a las partes, se devolverán las cantidades entregadas.
+La vivienda se vende como cuerpo cierto (art. 1471 del Código Civil).</pre>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="ck" aria-labelledby="ckT">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:70ch">
+    <div class="eyebrow">Antes de vender</div>
+    <h2 id="ckT">Los 6 puntos que se revisan antes de poner una casa a la venta</h2>
+    <p class="muted">Es el informe jurídico que se hace antes de publicar una vivienda. Si uno falla, se resuelve antes de firmar arras, no en la notaría.</p>
+  </div>
+  <div class="ck-grid">
+    <div class="ck-item"><span class="ck-n">1</span><div><h3>Propietarios</h3><p>Los que firman tienen que ser los mismos que salen en la nota simple, todos y con DNI. Si falta una herencia o un divorcio por resolver, se hace primero.</p><a href="guia-herencia.html">Guía de la Herencia →</a> </div></div>
+    <div class="ck-item"><span class="ck-n">2</span><div><h3>VPO</h3><p>Si es protegida: tipo, antigüedad, precio máximo y autorización de la Junta. Y si hay derecho de tanteo (de la Junta o, en Sevilla, de EMVISESA). A veces conviene pedir la descalificación.</p><a href="vpo.html">Guía de la VPO →</a></div></div>
+    <div class="ck-item"><span class="ck-n">3</span><div><h3>Cargas</h3><p>Hipotecas, embargos o condiciones resolutorias que salgan en la nota simple. Se cancelan antes o en la misma firma, con el dinero de la venta.</p></div></div>
+    <div class="ck-item"><span class="ck-n">4</span><div><h3>Superficie</h3><p>Que coincidan los metros del Catastro y de la nota simple, y que la casa esté declarada como es (sin plantas ni ampliaciones fuera del Registro).</p><span class="here">Lo explica esta web.</span></div></div>
+    <div class="ck-item"><span class="ck-n">5</span><div><h3>Fiscalidad</h3><p>Fecha y precio de compra, IRPF que pagará el vendedor (o si puede reinvertir) y plusvalía municipal.</p><a href="reinversion.html">Reinversión IRPF →</a></div></div>
+    <div class="ck-item"><span class="ck-n">6</span><div><h3>Situación familiar</h3><p>Divorcios, separaciones o viviendas en las que el otro tiene el uso: condicionan quién firma y qué impuestos hay.</p><a href="divorcio.html">Divorcio y Vivienda →</a></div></div>
+  </div>
+  <div class="ck-docs">
+    <div><h3>Papeles que se piden al vendedor</h3><ul>
+      <li>Escritura de la vivienda</li><li>DNI de todos los propietarios, con teléfono y correo</li><li>Último recibo del IBI</li><li>Último recibo de comunidad</li><li>Certificado energético (si no lo tiene, se encarga)</li><li>Antes de firmar: certificado de la comunidad de estar al corriente, estar al día del IBI y certificado de deuda del banco si hay hipoteca</li>
+    </ul></div>
+    <div><h3>En la firma y después</h3><ul>
+      <li>Antes de la notaría se entrega a cada parte la liquidación: lo que cobra o paga cada uno</li><li>El IBI del año se reparte entre vendedor y comprador en la propia notaría, para no reclamarlo después</li><li>Las cargas se cancelan con el dinero de la venta</li><li>Después: plusvalía municipal, cambio de luz, agua, comunidad y vado, y entrega de llaves</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Guía orientativa</b> basada en la Ley Hipotecaria, el texto refundido de la Ley del Suelo (art. 28), la Ley de Ordenación de la Edificación, la Ley 7/2021 LISTA de Andalucía y el tipo de AJD andaluz (1,2 %), a octubre de 2026. Precios orientativos de Sevilla. Confirma cada caso con el técnico, el Ayuntamiento y la notaría antes de comprometer una venta.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const r10=n=>n<100?Math.round(n):Math.round(n/10)*10;
+  const fmt=n=>String(r10(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €';
+  const rng=(a,b)=>r10(a)===r10(b)?fmt(a):fmt(a)+' – '+fmt(b);
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const IDS=['reg','tipoObra','lic','catObra','final','diez','m2','eur','queC','mReg','mReal','cat','suelo','venta','herencia'];
+  const EJ={
+    A:{reg:'construccion',lic:'lic',catObra:'si',final:'si',diez:'mas10',m2:160,eur:700,suelo:'urbano',venta:'hipoteca',herencia:false},
+    B:{tipoObra:'planta',lic:'ant',catObra:'si',final:'si',m2:45,eur:700,suelo:'urbano',venta:'hipoteca',herencia:false},
+    C:{queC:'parcela',mReg:300,mReal:340,cat:'si',suelo:'urbano',venta:'contado',herencia:false}
+  };
+  let caso='B';
+
+  function load(d){ for(const k in d){ const e=$(k); if(!e) continue; if(e.type==='checkbox') e.checked=!!d[k]; else e.value=d[k]; } }
+  function read(){ const o={}; IDS.forEach(k=>{ const e=$(k); o[k]=e.type==='checkbox'?e.checked:(e.type==='number'?(e.value===''?0:parseFloat(e.value)):e.value); }); return o; }
+
+  function render(){
+    const s=read();
+    const A=caso==='A', B=caso==='B', C=caso==='C';
+    $('fTitle').textContent = A?'Caso A · solar o en construcción': B?'Caso B · obra sin declarar':'Caso C · menos metros';
+    $('wReg').hidden=!A; $('wTipoObra').hidden=!B; $('wLic').hidden=C;
+    $('wFinal').hidden=!(!C && s.lic==='lic' && !(A && s.reg==='solar'));
+    $('wCatObra').hidden=!(!C && (s.lic==='ant'||s.lic==='nose'));
+    $('wDiez').hidden=!A; $('wM2').hidden=C; $('hM2').hidden=C; $('wC').hidden=!C;
+    $('m2Label').textContent = A?'m² construidos de la casa':'m² de la obra';
+
+    const st=[], costs=[], alerts=[], chips=[];
+    const W={tec:['no','No',''],ayto:['no','No',''],not:['si','Sí',''],reg:['si','Sí',''],imp:['no','No','']};
+    const catOK = s.catObra==='si';
+    let dMin=1, dMax=3;
+    const coste=(s.m2||0)*(s.eur||700);
+    const ajd=coste*0.012;
+    const ajdTxt = 'Impuesto AJD 1,2 % sobre el coste de construcción'+(s.m2?' ('+s.m2+' m² × '+(s.eur||700)+' €)':'');
+
+    st.push({t:'Pide la nota simple y la certificación catastral', p:'Para ver exactamente cómo está inscrita y qué tiene el Catastro (metros, plantas y año de construcción).', lleva:['Dirección o referencia catastral (está en el recibo del IBI)'], d:'registradores.org y sede del Catastro', pl:'1–2 días', c:'≈ 9 € + gratis'});
+    costs.push(['Nota simple y certificación catastral',9,15]);
+
+    if(s.suelo==='rustico' && !C){
+      chips.push(['Suelo rústico','bad']);
+      alerts.push(['bad','Suelo rústico: compruébalo antes de nada','Si el suelo está protegido, las obras sin licencia no prescriben. Y aunque no lo esté, casi siempre te pedirán la resolución de asimilado a fuera de ordenación (500–2.000 €, varios meses).']);
+      if(s.lic!=='lic'){ st.push({t:'Pide la resolución de asimilado a fuera de ordenación', p:'El Ayuntamiento reconoce que la casa ya no se puede derribar. En suelo rústico casi siempre la piden el notario y el banco.', lleva:['Certificado técnico con la antigüedad','Solicitud y tasa'], d:'Ayuntamiento', pl:'3–9 meses', c:'500–2.000 €'}); costs.push(['Ayuntamiento: asimilado a fuera de ordenación',500,2000]); W.ayto=['si','Sí','Asimilado a fuera de ordenación']; }
+    }
+
+    // ===== CASO A =====
+    if(A){
+      chips.push([s.reg==='solar'?'Inscrita como solar':'Inscrita en construcción','warn']);
+      const conLic = s.lic==='lic';
+      if(s.reg==='construccion' && conLic && s.final==='si'){
+        chips.push(['Camino corto','ok']);
+        st.push({t:'Reúne los papeles de la obra', p:'Con licencia y certificado final, basta con un acta de fin de obra.', lleva:['Certificado final de obra firmado por el arquitecto y el aparejador','Licencia de obra','Licencia de ocupación o declaración responsable de ocupación','Libro del edificio (lo da el arquitecto)', s.diez==='menos10'?'Seguro decenal, o declaración de autopromotor si la construyó el dueño para vivir él':'No hace falta seguro decenal: tiene más de 10 años'], d:'Arquitecto y Ayuntamiento', pl:'1–4 semanas', c:'Copias y tasa'});
+        st.push({t:'Presenta la declaración responsable de ocupación', p:'Solo si no tenéis la licencia de ocupación. Se presenta en el Ayuntamiento con el certificado final de obra.', lleva:['Certificado final de obra','Impreso del Ayuntamiento','Justificante de la tasa'], d:'Ayuntamiento (Gerencia de Urbanismo en Sevilla)', pl:'Efecto desde que se presenta, en la mayoría de casos', c:'100–500 €'});
+        costs.push(['Ayuntamiento: declaración responsable o licencia de ocupación',100,500]);
+        st.push({t:'Firma el acta de finalización de obra', p:'El notario recoge que la casa está terminada tal como se declaró. Si la casa acabó siendo más grande, se hace a la vez una ampliación.', lleva:['DNI de los dueños','Todo lo anterior','Nota simple'], d:'Notaría', pl:'1–2 semanas', c:'150–350 €'});
+        costs.push(['Notaría: acta de finalización de obra',150,350]);
+        alerts.push(['','Normalmente no se paga impuesto','El AJD ya se pagó cuando se declaró la obra en construcción. Solo se paga el 1,2 % sobre los metros de más, si la casa terminó siendo mayor.']);
+        W.tec=['no','No','Ya tenéis el certificado final']; W.ayto=['op','Solo si falta','La declaración de ocupación']; W.not=['si','Sí','Acta de fin de obra']; W.imp=['no','No','El AJD se pagó al empezar la obra'];
+        dMin=1; dMax=2;
+      } else if(conLic && s.final==='no' && s.reg==='construccion'){
+        chips.push(['Falta el final de obra','warn']);
+        st.push({t:'Consigue el certificado final de obra', p:'Pídeselo al arquitecto que dirigió la obra o a su colegio profesional. Si el arquitecto no está, otro técnico puede revisar la casa y certificarla. Si la casa tiene más de 6 años, también se puede ir por antigüedad, que suele ser más fácil.', lleva:['Licencia de obra','Proyecto de la obra (lo tiene el Ayuntamiento o el Colegio de Arquitectos)'], d:'Arquitecto o Colegio de Arquitectos de Sevilla', pl:'2–8 semanas', c:'300–1.200 €'});
+        costs.push(['Técnico: certificado final de obra',300,1200]);
+        st.push({t:'Presenta la declaración responsable de ocupación', p:'Con el certificado final, en el Ayuntamiento.', lleva:['Certificado final de obra','Impreso del Ayuntamiento'], d:'Ayuntamiento', pl:'1–4 semanas', c:'100–500 €'});
+        costs.push(['Ayuntamiento: ocupación',100,500]);
+        st.push({t:'Firma el acta de finalización de obra', p:'El notario la pasa a vivienda terminada.', lleva:['Certificado final','Licencias','Libro del edificio', s.diez==='menos10'?'Seguro decenal o declaración de autopromotor':'No hace falta seguro decenal'], d:'Notaría', pl:'1–2 semanas', c:'150–350 €'});
+        costs.push(['Notaría: acta de finalización',150,350]);
+        W.tec=['si','Sí','Firma el certificado final de obra']; W.ayto=['si','Sí','Declaración de ocupación']; W.not=['si','Sí','Acta de fin de obra']; W.imp=['no','No','El AJD se pagó al empezar la obra'];
+        dMin=2; dMax=4;
+      } else if(s.lic==='rec'){
+        chips.push(['Sin licencia y reciente','bad']);
+        alerts.push(['bad','Hay que legalizar primero','Con menos de 6 años sin licencia, el Ayuntamiento puede sancionar y, si no cumple la normativa, ordenar derribar. No se puede declarar en notaría hasta legalizarla.']);
+        st.push({t:'Legaliza la casa en el Ayuntamiento', p:'Un arquitecto hace un proyecto de legalización y se pide licencia como si fuera nueva. Se paga el ICIO (en torno al 4 % del presupuesto en Sevilla) y la tasa. Puede haber multa.', lleva:['Proyecto de legalización','Solicitud de licencia','Pago de ICIO y tasa'], d:'Gerencia de Urbanismo', pl:'4–12 meses', c:'Ver costes'});
+        costs.push(['Técnico: proyecto de legalización',1500,4000]);
+        costs.push(['Ayuntamiento: ICIO y tasa',coste*0.04,coste*0.06]);
+        st.push({t:'Certificado final y ocupación', p:'Al terminar la legalización, el arquitecto firma el final de obra y se presenta la declaración responsable de ocupación.', lleva:['Certificado final de obra','Licencia de legalización'], d:'Arquitecto y Ayuntamiento', pl:'2–6 semanas', c:'100–500 €'});
+        costs.push(['Ayuntamiento: ocupación',100,500]);
+        st.push({t: s.reg==='solar'?'Firma la escritura de obra nueva terminada':'Firma el acta de finalización de obra', p:'Con la licencia de legalización y el final de obra.', lleva:['Todo lo anterior', s.diez==='menos10'?'Seguro decenal o declaración de autopromotor':'No hace falta seguro decenal'], d:'Notaría', pl:'1–2 semanas', c: s.reg==='solar'?'400–800 €':'150–350 €'});
+        costs.push([s.reg==='solar'?'Notaría: obra nueva terminada':'Notaría: acta de finalización', s.reg==='solar'?400:150, s.reg==='solar'?800:350]);
+        if(s.reg==='solar') costs.push([ajdTxt,ajd,ajd]);
+        W.tec=['si','Sí','Proyecto de legalización y final de obra']; W.ayto=['si','Sí','Licencia, ICIO y posible multa']; W.not=['si','Sí', s.reg==='solar'?'Obra nueva terminada':'Acta de fin de obra']; W.imp=['tax','Sí', s.reg==='solar'?'ICIO + AJD 1,2 %':'ICIO'];
+        dMin=5; dMax=14;
+      } else {
+        const porAnt = s.lic!=='lic';
+        if(s.lic==='nose'){ chips.push(['Licencia: por saber','warn']);
+          st.push({t:'Averigua si tiene licencia', p:'Pregunta en el Ayuntamiento con la dirección y la referencia catastral. Mira el año de construcción en el Catastro: si tiene más de 6 años, puedes ir por antigüedad aunque no aparezca licencia.', lleva:['Referencia catastral','DNI'], d:'Ayuntamiento (Gerencia de Urbanismo)', pl:'1–4 semanas', c:'Gratis o tasa pequeña'}); }
+        if(porAnt && catOK){
+          chips.push(['Por antigüedad','ok']); chips.push(['Sin técnico','ok']);
+          st.push({t:'Usa la certificación catastral como prueba', p:'Si el Catastro describe la casa como es (plantas y metros) y su año de construcción tiene más de 6 años, el notario puede declararla solo con esa certificación. No hace falta técnico.', lleva:['Certificación catastral descriptiva y gráfica (gratis)','Comprobar que plantas, metros y año coinciden con la realidad'], d:'Sede del Catastro', pl:'El mismo día', c:'Gratis'});
+          W.tec=['no','No','Vale la certificación catastral'];
+        }
+        if(porAnt && !catOK){
+          chips.push(['Por antigüedad','ok']);
+          W.tec=['si','Sí','Certifica descripción y año'];
+          st.push({t:'Que un técnico certifique la casa y su antigüedad', p:'Arquitecto o aparejador. Visita la casa, la describe (plantas, metros, distribución) y certifica en qué año se terminó.', lleva:['Nota simple y certificación catastral','Fotos aéreas antiguas, si las hay (el técnico las busca)','Recibos, escrituras o fotos con fecha que ayuden'], d:'Arquitecto o aparejador', pl:'1–3 semanas', c:'400–1.000 €'});
+          costs.push(['Técnico: certificado de descripción y antigüedad',400,1000]);
+        }
+        if(porAnt){
+          st.push({t:'Pide al Ayuntamiento que no hay expediente', p:'Un certificado de que no hay ningún expediente de disciplina urbanística sobre la casa. No siempre lo exige el notario, pero ayuda.', lleva:['Referencia catastral','Solicitud'], d:'Ayuntamiento', pl:'2–6 semanas', c:'0–100 €'});
+          costs.push(['Ayuntamiento: certificado urbanístico',0,100]);
+          W.ayto=['op','Opcional','Certificado de que no hay expediente'];
+        } else {
+          W.tec=['op','Solo si falta','El certificado final de obra']; W.ayto=['op','Solo si falta','La ocupación'];
+          st.push({t:'Reúne los papeles de la obra', p:'Con licencia, se declara la casa terminada.', lleva:['Licencia de obra','Certificado final de obra','Licencia de ocupación o declaración responsable','Libro del edificio', s.diez==='menos10'?'Seguro decenal o declaración de autopromotor':'No hace falta seguro decenal'], d:'Arquitecto y Ayuntamiento', pl:'1–4 semanas', c:'Copias y tasa'});
+          costs.push(['Ayuntamiento: ocupación (si falta)',0,500]);
+        }
+        const nom = s.reg==='solar' ? 'escritura de obra nueva terminada' : 'acta de finalización de obra'+(porAnt?' por antigüedad':'');
+        st.push({t:'Firma en notaría '+(s.reg==='solar'?'la ':'el ')+nom, p: s.reg==='solar' ? 'El notario declara que sobre el solar hay una casa terminada, con su descripción, metros y año. Si había una casa vieja que se derribó, se declara también.' : 'El notario pasa la obra de "en construcción" a "terminada" con la descripción real.', lleva:['DNI de los dueños', porAnt&&catOK?'Certificación catastral':'Certificado del técnico'+(porAnt?' con la antigüedad':''),'Nota simple'], d:'Notaría', pl:'1–2 semanas', c: s.reg==='solar'?'400–800 €':'200–450 €'});
+        costs.push(['Notaría: '+nom, s.reg==='solar'?400:200, s.reg==='solar'?800:450]);
+        W.not=['si','Sí', s.reg==='solar'?'Obra nueva terminada':'Acta de fin de obra'];
+        W.imp = s.reg==='solar' ? ['tax','Sí','AJD 1,2 % del coste de construir'] : ['no','No','El AJD se pagó al empezar la obra'];
+        if(s.reg==='solar'){ costs.push([ajdTxt,ajd,ajd]);
+          if(!s.m2) alerts.push(['','Pon los m² construidos','Para calcular el impuesto: 1,2 % de lo que costaría construir la casa hoy.']); }
+        else alerts.push(['','Normalmente no se paga impuesto','El AJD ya se pagó al declarar la obra en construcción. Solo se paga el 1,2 % sobre los metros que haya de más.']);
+        dMin=1; dMax= porAnt?3:2;
+      }
+      if(s.diez==='menos10' && s.venta!=='no') alerts.push(['warn','Casa con menos de 10 años: ojo al seguro decenal','Si la construyó el dueño para vivir él, se puede vender sin seguro decenal si el comprador lo acepta en la escritura. Si no, hay que contratarlo, y después de construida es difícil. Pregúntalo al notario antes de firmar arras.']);
+    }
+
+    // ===== CASO B =====
+    if(B){
+      const nombre={planta:'segunda planta',cocina:'ampliación',patio:'cubrición del patio',cochera:'cochera o almacén',piscina:'piscina'}[s.tipoObra];
+      chips.push(['Obra sin declarar: '+nombre,'warn']);
+      if(s.lic==='lic'){
+        chips.push(['Con licencia','ok']);
+        st.push({t:'Junta los papeles de la obra', p:'Con licencia, el camino es el más limpio.', lleva:['Licencia de obra (copia en el Ayuntamiento si no la tenéis)', s.final==='si'?'Certificado final de obra':'Certificado final de obra: pedídselo al técnico que dirigió la obra', s.tipoObra==='planta'||s.tipoObra==='cocina'?'Declaración responsable de ocupación de la parte nueva':'—'].filter(x=>x!=='—'), d:'Ayuntamiento y técnico', pl:'1–4 semanas', c: s.final==='si'?'Copias':'300–800 €'});
+        if(s.final!=='si') costs.push(['Técnico: certificado final de obra',300,800]);
+        st.push({t:'Firma la escritura de ampliación de obra', p:'El notario añade la '+nombre+' a la descripción de la casa con los metros nuevos.', lleva:['DNI','Licencia y certificado final','Nota simple'], d:'Notaría', pl:'1–2 semanas', c:'300–600 €'});
+        costs.push(['Notaría: escritura de ampliación de obra',300,600]);
+        costs.push([ajdTxt.replace('de construcción','de la obra'),ajd,ajd]);
+        W.tec = s.final==='si'?['no','No','Ya tenéis el certificado final']:['si','Sí','Firma el certificado final']; W.ayto=['op','Solo si falta','Ocupación de la parte nueva']; W.not=['si','Sí','Escritura de ampliación']; W.imp=['tax','Sí','AJD 1,2 % del coste de la obra'];
+        dMin=1; dMax=2;
+      } else if(s.lic==='rec'){
+        chips.push(['Sin licencia y reciente','bad']);
+        alerts.push(['bad','Primero hay que legalizarla','Con menos de 6 años sin licencia, el Ayuntamiento puede multar y, si no cumple la normativa (altura, ocupación de parcela, distancias a linderos), ordenar derribarla. Hasta legalizarla no se puede declarar.']);
+        st.push({t:'Comprueba si se puede legalizar', p:'El técnico mira si la obra cumple el planeamiento: altura máxima, número de plantas, cuánto se puede ocupar de la parcela y distancias a linderos. Ampliar la cocina ocupando todo el patio a menudo no cumple.', lleva:['Nota simple','Medición de la obra'], d:'Técnico y consulta urbanística', pl:'1–3 semanas', c:'Incluido en el proyecto'});
+        st.push({t:'Proyecto de legalización y licencia', p:'El técnico hace el proyecto y se pide licencia. Se paga el ICIO (en torno al 4 % del presupuesto en Sevilla) y la tasa. Puede haber multa.', lleva:['Proyecto de legalización','Solicitud','Pago de ICIO y tasa'], d:'Gerencia de Urbanismo', pl:'4–12 meses', c:'Ver costes'});
+        costs.push(['Técnico: proyecto de legalización',1000,3000]);
+        costs.push(['Ayuntamiento: ICIO y tasa',coste*0.04,coste*0.06]);
+        st.push({t:'Firma la escritura de ampliación de obra', p:'Con la licencia de legalización y el certificado final.', lleva:['Licencia','Certificado final','DNI','Nota simple'], d:'Notaría', pl:'1–2 semanas', c:'300–600 €'});
+        costs.push(['Notaría: escritura de ampliación',300,600]);
+        costs.push([ajdTxt.replace('de construcción','de la obra'),ajd,ajd]);
+        W.tec=['si','Sí','Proyecto de legalización']; W.ayto=['si','Sí','Licencia, ICIO y posible multa']; W.not=['si','Sí','Escritura de ampliación']; W.imp=['tax','Sí','ICIO + AJD 1,2 %'];
+        dMin=5; dMax=14;
+      } else {
+        if(s.lic==='nose'){ chips.push(['Licencia: por saber','warn']);
+          st.push({t:'Averigua si hay licencia y cuándo se hizo', p:'Pregunta en el Ayuntamiento. Mira el año en el Catastro y las fotos aéreas antiguas: si la obra tiene más de 6 años, se va por antigüedad.', lleva:['Referencia catastral'], d:'Ayuntamiento y Catastro', pl:'1–4 semanas', c:'Gratis o tasa pequeña'}); }
+        else chips.push(['Por antigüedad','ok']);
+        if(catOK){
+          chips.push(['Sin técnico','ok']);
+          st.push({t:'Usa la certificación catastral como prueba', p:'Si el Catastro ya recoge la '+nombre+' con sus metros y el año tiene más de 6 años, el notario puede declararla solo con la certificación. No hace falta técnico.', lleva:['Certificación catastral descriptiva y gráfica (gratis)','Comprobar que los metros y el año coinciden con la realidad'], d:'Sede del Catastro', pl:'El mismo día', c:'Gratis'});
+          W.tec=['no','No','Vale la certificación catastral'];
+        } else {
+        W.tec=['si','Sí','Certifica la obra y su año'];
+        st.push({t:'Que un técnico certifique la obra y su antigüedad', p:'Arquitecto o aparejador. Mide la '+nombre+', describe cómo queda la casa entera y certifica el año en que se terminó la obra.', lleva:['Nota simple y certificación catastral','Fotos aéreas antiguas (el técnico las busca)','Facturas, fotos o recibos con fecha de la obra, si los hay'], d:'Arquitecto o aparejador', pl:'1–3 semanas', c:'400–900 €'});
+        costs.push(['Técnico: certificado de descripción y antigüedad',400,900]);
+        }
+        W.not=['si','Sí','Ampliación por antigüedad']; W.imp=['tax','Sí','AJD 1,2 % del coste de la obra'];
+        st.push({t:'Firma la escritura de ampliación de obra por antigüedad', p:'El notario añade la '+nombre+' a la descripción con los metros '+(catOK?'del Catastro':'del técnico')+'. El Registro la inscribe y avisa al Ayuntamiento.', lleva:['DNI', catOK?'Certificación catastral':'Certificado del técnico','Nota simple'], d:'Notaría', pl:'1–2 semanas', c:'300–600 €'});
+        costs.push(['Notaría: escritura de ampliación por antigüedad',300,600]);
+        costs.push([ajdTxt.replace('de construcción','de la obra'),ajd,ajd]);
+        dMin=1; dMax=3;
+      }
+      if(!s.m2) alerts.push(['','Pon los m² de la obra','Así sale el impuesto: 1,2 % de lo que costaría construirla hoy.']);
+      if(s.tipoObra==='piscina') alerts.push(['','La piscina no suma metros a la casa','Pero hay que declararla igual: aparece en el Catastro y en la tasación.']);
+    }
+
+    // ===== CASO C =====
+    let pequeña=false;
+    if(C){ W.imp=['no','No','Corregir superficie de parcela no paga impuesto'];
+      const d = s.mReg>0 && s.mReal>0 ? (s.mReal-s.mReg)/s.mReg*100 : null;
+      if(d!==null) chips.push([(d>0?'+':'')+d.toFixed(1).replace('.',',')+' % sobre el Registro', Math.abs(d)<5?'ok':Math.abs(d)<=10?'warn':'bad']);
+      if(s.queC==='casa'){
+        alerts.push(['warn','¿Seguro que no hubo obras?','Si la casa construida mide más que lo inscrito, casi siempre es porque se amplió algo. Si fue así, es el caso B. Si de verdad nunca se tocó, se corrige con certificado técnico y escritura de rectificación.']);
+        st.push({t:'Que un técnico mida la casa', p:'Mide la superficie construida y certifica que la casa está así desde hace años.', lleva:['Nota simple','Certificación catastral'], d:'Arquitecto o aparejador', pl:'1–2 semanas', c:'250–600 €'});
+        costs.push(['Técnico: medición y certificado',250,600]);
+        st.push({t:'Firma la escritura de rectificación de la descripción', p:'El notario corrige los metros construidos. Si el Catastro coincide, ayuda mucho.', lleva:['DNI','Certificado técnico','Certificación catastral'], d:'Notaría', pl:'1–2 semanas', c:'250–500 €'});
+        costs.push(['Notaría: rectificación',250,500]);
+        W.tec=['si','Sí','Mide y certifica']; W.not=['si','Sí','Rectificación']; W.imp=['op','Posible','Si el notario lo trata como ampliación: AJD 1,2 %'];
+        dMin=1; dMax=2;
+      } else {
+        if(s.cat!=='si'){
+          st.push({t:'Corrige primero el Catastro', p:'Un técnico hace un plano georreferenciado de la parcela (un archivo GML con coordenadas) y se pide al Catastro que lo cambie. El Catastro es gratis; se paga al técnico.', lleva:['Plano georreferenciado del técnico','Solicitud de subsanación de discrepancias en la sede del Catastro'], d:'Técnico y Catastro', pl:'1–3 meses', c:'250–500 €'});
+          costs.push(['Técnico: plano georreferenciado',250,500]);
+          W.tec=['si','Sí','Plano georreferenciado para el Catastro'];
+          dMax=Math.max(dMax,4);
+        }
+        if(d!==null && Math.abs(d)<5){
+          pequeña=true; chips.push(['Diferencia pequeña','ok']);
+          st.push({t:'Corrígelo en la próxima escritura', p:'Con menos del 5 % no hace falta expediente. Basta con aportar la certificación catastral en la próxima escritura que se firme (venta, herencia…).', lleva:['Certificación catastral descriptiva y gráfica'], d:'Notaría', pl:'En la próxima firma', c:'Casi nada'});
+          dMin=0; dMax= s.cat!=='si'?4:0;
+          W.not=['op','En la próxima firma','Se corrige en la venta o la herencia']; W.reg=['op','Con esa escritura',''];
+        } else if(d!==null && Math.abs(d)<=10){
+          st.push({t:'Rectifica con la certificación catastral', p:'Entre el 5 % y el 10 %, el Registro acepta la certificación catastral si coincide con la realidad. Se puede hacer en la escritura de venta o de herencia, o en una aparte.', lleva:['Certificación catastral descriptiva y gráfica','DNI'], d:'Notaría', pl:'1–2 meses', c:'150–400 €'});
+          costs.push(['Notaría: rectificación de cabida',150,400]);
+          W.not=['si','Sí','Rectificación con el Catastro'];
+          dMin=1; dMax=Math.max(dMax,2);
+        } else {
+          st.push({t:'Expediente de exceso de cabida ante notario', p:'Más del 10 %: el notario abre un expediente y avisa a los vecinos colindantes y al Ayuntamiento. Si en 20 días nadie se opone, se inscribe la nueva superficie. Si un vecino se opone, toca llegar a un acuerdo de lindes o ir al juzgado.', lleva:['DNI','Escritura y nota simple','Certificación catastral (o el plano georreferenciado)','Nombres y direcciones de los vecinos colindantes'], d:'Notaría', pl:'2–4 meses', c:'400–800 €'});
+          costs.push(['Notaría: expediente de exceso de cabida',400,800]);
+          W.not=['si','Sí','Expediente con aviso a vecinos'];
+          dMin=2; dMax=Math.max(dMax,4);
+        }
+      }
+    }
+
+    if(!pequeña){
+      const hayAjd = costs.some(c=>/AJD/.test(c[0]) && c[2]>0);
+      st.push({t:'Inscribe en el Registro', p:'La notaría suele presentarlo.'+(hayAjd?' Antes, se paga el AJD con el modelo 600 en la Agencia Tributaria de Andalucía, en el mes siguiente a la firma.':''), lleva:['Copia de la escritura', hayAjd?'Justificante del modelo 600':'—'].filter(x=>x!=='—'), d:'Registro de la Propiedad', pl:'2–4 semanas', c:'100–300 €'});
+      costs.push(['Registro de la Propiedad',100,300]);
+    }
+    if(!C) st.push({t:'Comprueba el Catastro', p:'El notario suele comunicarlo. Si en un par de meses no aparece, presenta el modelo 902N (gratis). El IBI subirá.', lleva:['Escritura'], d:'Catastro', pl:'1–3 meses', c:'Gratis'});
+
+    let sell='';
+    if(s.venta!=='no'){
+      let co, hi;
+      if(A){ co=['y','Sí, como está','Se vende tal como está en el Registro ('+(s.reg==='solar'?'solar':'en construcción')+'). El comprador lo asume.'];
+             hi=['n','No hasta regularizar','El banco tasa lo que está inscrito: '+(s.reg==='solar'?'un solar':'una obra sin terminar')+'. Regularizad antes de la escritura.']; }
+      else if(B){ co=['y','Sí, como está','Se vende con los metros del Registro y el comprador asume la obra sin declarar.'];
+             hi= s.lic==='rec' ? ['n','Muy difícil','No se tasa una obra que se puede sancionar.'] : ['m','Sí, pero tasan menos','La obra no declarada no cuenta en la tasación. Si el precio depende de ella, regularizad antes: '+(s.lic==='lic'?'1–2 meses':'1–3 meses')+'.']; }
+      else { co=['y','Sí','Vended como cuerpo cierto.']; hi= pequeña?['y','Sí','Se corrige en la misma escritura de venta.']:['m','Sí, con los metros del Registro','La tasación saldrá con los metros inscritos. Si la diferencia importa en el precio, corregidlo antes.']; }
+      sell=`<div class="sell"><div class="${co[0]}"><span class="small muted">Comprador al contado</span><b>${esc(co[1])}</b><span>${esc(co[2])}</span></div><div class="${hi[0]}"><span class="small muted">Comprador con hipoteca</span><b>${esc(hi[1])}</b><span>${esc(hi[2])}</span></div></div>`;
+      if(s.venta==='hipoteca' && hi[0]!=='y') alerts.push(['warn','Comprador con hipoteca: regularizad antes de la escritura','Dejad en las arras un plazo de al menos '+(dMax+1)+' meses y que el vendedor se obligue a regularizar a su cargo. Tienes el texto en "Textos para el anuncio y las arras", más abajo.']);
+    }
+    if(s.herencia) alerts.push(['ok','Hacedlo en la misma escritura que la herencia','Se ahorra una escritura. Los pasos de la herencia están en la Guía de la Herencia.']);
+
+    const tLo=costs.reduce((a,c)=>a+c[1],0), tHi=costs.reduce((a,c)=>a+c[2],0);
+    const ord={bad:0,warn:1,'':2,ok:3}; alerts.sort((a,b)=>ord[a[0]]-ord[b[0]]);
+    const dur = dMax<=0?'En la próxima firma':(dMin===dMax?String(dMax):(Math.max(dMin,1)+'–'+dMax))+(dMax<=0?'':(dMax===1?' mes':' meses'));
+    $('out').innerHTML=`
+      <div class="card">
+        <div class="eyebrow">Resumen</div>
+        <div class="chips">${chips.map(c=>`<span class="chip ${c[1]}">${esc(c[0])}</span>`).join('')}</div>
+        <div class="big">
+          <div><b class="num">${rng(tLo,tHi)}</b><span>coste aproximado</span></div>
+          <div><b class="num">${esc(dur)}</b><span>duración probable</span></div>
+          <div><b class="num">${st.length}</b><span>pasos</span></div>
+        </div>
+        ${sell}
+      </div>
+      <div class="card">
+        <div class="eyebrow">Quién hace falta</div>
+        <div class="who">${[['Técnico',W.tec],['Ayuntamiento',W.ayto],['Notario',W.not],['Registro',W.reg],['Impuestos',W.imp]].map(([k,v])=>`<div><span class="k">${k}</span><span class="yn ${v[0]}">${esc(v[1])}</span>${v[2]?`<small>${esc(v[2])}</small>`:''}</div>`).join('')}</div>
+        ${W.tec[0]==='no' && W.ayto[0]!=='si' ? '<p class="solo">Lo puede hacer todo la notaría: no hace falta arquitecto.</p>' : ''}
+      </div>
+      ${alerts.length?`<div class="alerts">${alerts.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join('')}</div>`:''}
+      <div class="card">
+        <div class="eyebrow">Paso a paso</div>
+        <ol class="route">${st.map(x=>`<li><div><h3>${esc(x.t)}</h3><p>${esc(x.p)}</p>
+          ${x.lleva&&x.lleva.length?`<div class="lleva">Qué llevar</div><ul>${x.lleva.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
+          <div class="meta"><span>Dónde: <b>${esc(x.d)}</b></span><span>Plazo: <b>${esc(x.pl)}</b></span><span>Coste: <b>${esc(x.c)}</b></span></div></div></li>`).join('')}</ol>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Costes</div>
+        <div class="tbl"><table class="costs">
+          <thead><tr><th>Concepto</th><th class="r">Mínimo</th><th class="r">Máximo</th></tr></thead>
+          <tbody>${costs.map(c=>`<tr><td>${esc(c[0])}</td><td class="r">${fmt(c[1])}</td><td class="r">${fmt(c[2])}</td></tr>`).join('')}
+          <tr class="sub"><td>Total</td><td class="r">${fmt(tLo)}</td><td class="r">${fmt(tHi)}</td></tr></tbody>
+        </table></div>
+        <p class="muted small">Precios orientativos de Sevilla. Técnicos y tasas municipales varían: pedid dos presupuestos.</p>
+      </div>`;
+  }
+
+  function setCaso(c, loadEx){
+    caso=c; $('caso'+c).checked=true;
+    if(loadEx) load(EJ[c]);
+    render();
+    try{ localStorage.setItem('regularizar-v2', JSON.stringify({caso, datos:read()})); }catch(e){}
+  }
+  document.querySelectorAll('input[name=caso]').forEach(r=>r.addEventListener('change',()=>setCaso(r.value,true)));
+  $('f').addEventListener('input',()=>setCaso(caso,false));
+  $('f').addEventListener('change',()=>setCaso(caso,false));
+  $('btnReset').addEventListener('click',()=>setCaso(caso,true));
+
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('regularizar-v2')||'null'); }catch(e){}
+  if(saved && saved.caso && EJ[saved.caso]){ load(Object.assign({},EJ[saved.caso],saved.datos||{})); setCaso(saved.caso,false); }
+  else setCaso('B',true);
+})();
+</script>
+
+<script>if(window.top!==window.self){var b=document.querySelector(".backbar");if(b)b.remove();}</script>
+</body>
+</html>

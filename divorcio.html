@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#082d74">
+<title>Divorcio y Vivienda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera + 3 situaciones según cómo se compró + 4 salidas para la casa + calculadora de extinción + papeles + puente VPO + desplegables */
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --ink:#1B1A16; --muted:#5E5B52; --line:#DEDACF;
+  --accent:#7A5410; --accent-soft:#F4ECDC; --two:#3F5E6B;
+  --warn:#8A5300; --warn-soft:#FBEFD8; --bad:#9E2F2A; --bad-soft:#F8E2DF; --ok:#2B663B; --ok-soft:#E1EFE4;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13120F; --surface:#1C1B17; --ink:#ECE8DF; --muted:#A39E91; --line:#322F28;
+  --accent:#E2B565; --accent-soft:#33291A; --two:#8DB3C2;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13120F; --surface:#1C1B17; --ink:#ECE8DF; --muted:#A39E91; --line:#322F28;
+  --accent:#E2B565; --accent-soft:#33291A; --two:#8DB3C2;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:52px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.1rem,5vw,3.2rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,3vw,1.95rem)}
+h3{font-size:1.18rem}
+p{margin:0}
+a{color:var(--accent)}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:.86rem}
+.num{font-variant-numeric:tabular-nums}
+.sec{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+
+header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:36px;align-items:end;border-bottom:1px solid var(--line);padding-bottom:28px}
+header .lead{font-size:1.12rem;max-width:58ch;color:var(--muted);margin-top:14px}
+.split{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.split .house{display:flex;height:46px;border-radius:8px;overflow:hidden;font-size:.82rem;font-weight:700}
+.split .house div{display:grid;place-items:center;color:var(--surface)}
+.split .a{background:var(--accent);flex:1} .split .b{background:var(--two);flex:1}
+.split p{font-size:.88rem;color:var(--muted)}
+
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card3{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.card3 .who{font-family:var(--mono);font-size:.74rem;color:var(--accent)}
+.card3 p{font-size:.92rem}
+.ex{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:.86rem;line-height:1.45}
+
+.four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.opt .n{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.opt p{font-size:.9rem}
+.opt .pro{font-size:.84rem;color:var(--ok)} .opt .con{font-size:.84rem;color:var(--bad)}
+
+.taxes{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 10px}
+.taxes table{border-collapse:collapse;width:100%;min-width:760px;font-size:.88rem}
+.taxes th,.taxes td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.taxes thead th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.taxes tbody th{font-weight:600}
+.taxes tr:last-child td,.taxes tr:last-child th{border-bottom:none}
+.yn{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.yn.no{background:var(--ok-soft);color:var(--ok)} .yn.si{background:var(--bad-soft);color:var(--bad)} .yn.op{background:var(--warn-soft);color:var(--warn)}
+.yn + small{display:block;color:var(--muted);font-size:.78rem;line-height:1.3;margin-top:3px}
+
+.tool{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.86rem;font-weight:600}
+.help{font-size:.77rem;color:var(--muted);line-height:1.35}
+select,input[type=number]{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;font-variant-numeric:tabular-nums}
+select:focus-visible,input:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;line-height:1.35}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.grp{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.grp-t{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+.out{display:flex;flex-direction:column;gap:22px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.big{display:flex;flex-wrap:wrap;gap:28px}
+.big div{display:flex;flex-direction:column}
+.big b{font-family:var(--display);font-size:2rem;font-weight:600;line-height:1.1}
+.big span{font-size:.82rem;color:var(--muted)}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.side{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.side h3{font-size:1.05rem}
+.side.a{border-top:3px solid var(--accent)} .side.b{border-top:3px solid var(--two)}
+.side ul{margin:0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+.alerts{display:flex;flex-direction:column;gap:10px}
+.alert{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 8px 8px 0;font-size:.92rem}
+.alert.warn{border-color:var(--warn);background:var(--warn-soft)} .alert.ok{border-color:var(--ok);background:var(--ok-soft)} .alert.bad{border-color:var(--bad);background:var(--bad-soft)}
+.alert b{display:block;margin-bottom:2px}
+table.costs{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+.costs th,.costs td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.costs th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.costs td.r,.costs th.r{text-align:right;white-space:nowrap}
+.costs tr.sub td{font-weight:700;border-top:2px solid var(--ink)}
+ol.route{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;counter-reset:paso}
+ol.route > li{counter-increment:paso;display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+ol.route > li:last-child{border-bottom:none}
+ol.route > li::before{content:counter(paso);font-family:var(--display);font-size:1.15rem;font-weight:600;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center}
+ol.route h3{font-size:1.05rem;margin-bottom:3px}
+ol.route p{font-size:.92rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:.8rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+
+.papers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:8px}
+.pap ul{margin:0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+.bridge{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--r);padding:22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px}
+.bridge ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.93rem}
+
+.lib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 28px;align-items:start}
+.lib > div{display:flex;flex-direction:column;gap:12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details[open]{border-color:var(--accent)}
+summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:600;position:relative;line-height:1.35}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.dc{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:.94rem}
+.dc ul,.dc ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted);max-width:80ch}
+
+@media (max-width:980px){ .four{grid-template-columns:1fr 1fr} }
+@media (max-width:900px){ header{grid-template-columns:1fr;gap:20px} .three,.papers{grid-template-columns:1fr} .tool{grid-template-columns:1fr} .form{position:static;max-height:none} .lib{grid-template-columns:1fr} .bridge{grid-template-columns:1fr} }
+@media (max-width:560px){ .four{grid-template-columns:1fr} .sides{grid-template-columns:1fr} }
+@media (max-width:420px){ .row2{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.ck{display:flex;flex-direction:column;gap:18px}
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ck-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;min-width:0}
+.ck-n{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.ck-item h3{font-size:1.02rem;margin:0 0 3px}
+.ck-item p{font-size:.88rem;margin:0}
+.ck-item a{font-size:.84rem;font-weight:600}
+.ck-item .here{font-size:.8rem;color:var(--muted)}
+.ck-docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.ck-docs ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+@media (max-width:900px){ .ck-grid{grid-template-columns:1fr} .ck-docs{grid-template-columns:1fr} }
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>.backbar{display:flex;margin-bottom:-28px}.backbar a{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;font-weight:700;color:#082d74;text-decoration:none;background:#fff;border:1px solid #e0e3f0;border-radius:999px;padding:7px 14px;box-shadow:0 1px 2px rgba(16,19,42,.05)}.backbar a:hover{border-color:#b9c2de}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .backbar a{background:#1b2030;color:#cfd8f5;border-color:#2c3348}}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="backbar"><a href="index.html">‹ Herramientas</a></div>
+
+<header>
+  <div>
+    <div class="eyebrow">Andalucía · octubre 2026</div>
+    <h1>¿Qué pasa con la casa en un divorcio?</h1>
+    <p class="lead">Quién se la queda, cuánto hay que compensar al otro, qué pasa con la hipoteca, qué impuestos se pagan y qué papeles hacen falta. Y si uno de los dos quiere pedir una VPO.</p>
+  </div>
+  <div class="split">
+    <div class="eyebrow">La regla básica</div>
+    <div class="house"><div class="a">50 % Ella</div><div class="b">50 % Él</div></div>
+    <p>Divorciarse no cambia de quién es la casa. Siguen siendo dueños los dos hasta que uno compra la parte del otro, se vende o un juez lo decide. Que uno tenga el <b>uso</b> (por ejemplo, con los hijos) no le hace dueño.</p>
+  </div>
+</header>
+
+<section class="sec" aria-labelledby="t1">
+  <div class="sec-head">
+    <div class="eyebrow">Primero</div>
+    <h2 id="t1">¿Cómo es la casa de los dos?</h2>
+    <p class="muted">Mira la escritura de compra. De esto depende todo: el trámite, los impuestos y los papeles.</p>
+  </div>
+  <div class="three">
+    <article class="card3">
+      <span class="who">CASADOS EN GANANCIALES</span>
+      <h3>Liquidación de gananciales</h3>
+      <p>Lo comprado durante el matrimonio es de la sociedad de gananciales. Al divorciarse se <b>liquida</b>: se hace inventario de todo y se reparte.</p>
+      <div class="ex">Es lo más barato: no paga AJD ni plusvalía municipal, y normalmente tampoco IRPF.</div>
+    </article>
+    <article class="card3">
+      <span class="who">SEPARACIÓN DE BIENES O COMPRADA ANTES DE CASARSE</span>
+      <h3>Extinción de condominio</h3>
+      <p>La casa es de los dos por partes (50/50 u otro %). Para que se la quede uno, se <b>extingue el condominio</b>: uno se queda todo y compensa al otro.</p>
+      <div class="ex">Si se hace dentro del convenio del divorcio aprobado por el juez, no paga AJD. Si se hace aparte, sí.</div>
+    </article>
+    <article class="card3">
+      <span class="who">PAREJA DE HECHO</span>
+      <h3>Extinción de condominio sin ventajas</h3>
+      <p>Para Hacienda no hay divorcio: es una copropiedad normal entre dos personas. Se hace igual, con escritura ante notario.</p>
+      <div class="ex">Paga AJD (1,2 % en Andalucía). Si uno cede su parte sin cobrar, es una donación.</div>
+    </article>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t2">
+  <div class="sec-head">
+    <div class="eyebrow">Las salidas</div>
+    <h2 id="t2">Cuatro cosas que se pueden hacer con la casa</h2>
+  </div>
+  <div class="four">
+    <article class="opt"><span class="n">1</span><h3>Uno se la queda</h3><p>Compra la parte del otro: le paga su parte del valor menos su parte de la hipoteca, y asume la hipoteca entera.</p><span class="pro">Rápido y sin buscar comprador.</span><span class="con">Necesita que el banco libere al otro.</span></article>
+    <article class="opt"><span class="n">2</span><h3>Venderla y repartir</h3><p>Se vende a un tercero, se cancela la hipoteca y el resto se reparte según el % de cada uno.</p><span class="pro">Limpio: ninguno queda atado.</span><span class="con">Cada uno paga su IRPF por la ganancia.</span></article>
+    <article class="opt"><span class="n">3</span><h3>Seguir los dos de dueños</h3><p>Uno vive (con los hijos) y los dos siguen pagando. Se decide más adelante.</p><span class="pro">No hay que pagar ni vender ahora.</span><span class="con">Ninguno puede pedir VPO ni hipoteca nueva fácilmente.</span></article>
+    <article class="opt"><span class="n">4</span><h3>Sin acuerdo: el juez</h3><p>Cualquiera puede pedir la división. Si nadie compra al otro, el juez ordena venderla en subasta.</p><span class="pro">Desbloquea la situación.</span><span class="con">Lento, caro y la subasta da menos dinero.</span></article>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t3">
+  <div class="sec-head">
+    <div class="eyebrow">Impuestos</div>
+    <h2 id="t3">Qué se paga cuando uno se queda la casa</h2>
+  </div>
+  <div class="taxes"><table>
+    <thead><tr><th>Situación</th><th>AJD (Junta)</th><th>Plusvalía municipal</th><th>IRPF de quien cede</th><th>Notaría y Registro</th></tr></thead>
+    <tbody>
+      <tr><th>Gananciales, en el divorcio</th><td><span class="yn no">No</span><small>Exento (art. 45 Ley ITP-AJD)</small></td><td><span class="yn no">No</span><small>No sujeta por divorcio (art. 104.3 Ley de Haciendas Locales)</small></td><td><span class="yn no">Normalmente no</span><small>Repartir gananciales no es vender</small></td><td>Sí</td></tr>
+      <tr><th>Separación de bienes, en el convenio aprobado por el juez</th><td><span class="yn no">No</span><small>Exento por ir en el convenio</small></td><td><span class="yn no">No</span><small>No sujeta por divorcio</small></td><td><span class="yn op">Puede</span><small>Si le compensan por encima de lo que le costó su parte</small></td><td>Registro sí; notaría a veces no hace falta</td></tr>
+      <tr><th>Separación de bienes, en divorcio ante notario o escritura aparte</th><td><span class="yn si">Sí, 1,2 %</span><small>Andalucía no lo bonifica. Pregunta al notario si lo incluye en el convenio</small></td><td><span class="yn no">No</span><small>Si es consecuencia del divorcio</small></td><td><span class="yn op">Puede</span></td><td>Sí</td></tr>
+      <tr><th>Pareja de hecho</th><td><span class="yn si">Sí, 1,2 %</span></td><td><span class="yn no">Normalmente no</span><small>Repartir la copropiedad sin exceso no es transmisión</small></td><td><span class="yn op">Puede</span></td><td>Sí</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Quien se queda la casa no paga IRPF. Quien cede puede tener ganancia si lo que recibe (compensación más la parte de hipoteca de la que se libra) supera lo que le costó su mitad. Esa ganancia se puede dejar exenta si reinvierte en otra vivienda habitual o tiene 65 años o más: lo calcula la web <a href="reinversion.html">Reinversión IRPF</a>.</p>
+</section>
+
+<section class="sec" aria-labelledby="t4">
+  <div class="sec-head">
+    <div class="eyebrow">Calculadora</div>
+    <h2 id="t4">Si uno se queda la casa: cuánto paga y cuánto cuesta</h2>
+  </div>
+  <div class="tool">
+    <form class="form" id="f" onsubmit="return false">
+      <div class="field">
+        <label for="reg">¿Cómo es la casa?</label>
+        <select id="reg">
+          <option value="gan">Casados en gananciales</option>
+          <option value="sep">Separación de bienes o comprada antes de casarse</option>
+          <option value="ph">Pareja de hecho</option>
+        </select>
+      </div>
+      <div class="field" id="wVia">
+        <label for="via">¿Dónde se va a hacer?</label>
+        <select id="via">
+          <option value="jud">En el convenio del divorcio aprobado por el juez</option>
+          <option value="not">En el divorcio ante notario (sin hijos menores)</option>
+          <option value="apa">En una escritura aparte, después</option>
+        </select>
+      </div>
+
+      <div class="grp">
+        <div class="grp-t">La casa</div>
+        <div class="row2">
+          <div class="field"><label for="valor">Valor de hoy</label><input type="number" id="valor" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="hip">Hipoteca pendiente</label><input type="number" id="hip" min="0" step="1000" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label for="pct">% del que se va</label><input type="number" id="pct" min="1" max="99" step="1" inputmode="numeric"><span class="help">Normalmente 50. Mira la escritura.</span></div>
+      </div>
+
+      <div class="grp">
+        <div class="grp-t">Para el IRPF del que se va</div>
+        <div class="row2">
+          <div class="field"><label for="compra">Precio de compra</label><input type="number" id="compra" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="gc">Gastos de compra</label><input type="number" id="gc" min="0" step="100" inputmode="numeric"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="m65"> El que se va tiene 65 años o más</label>
+        <label class="check"><input type="checkbox" id="rein"> El que se va comprará otra vivienda habitual en 2 años</label>
+      </div>
+
+      <div class="grp">
+        <div class="grp-t">La hipoteca</div>
+        <div class="field">
+          <label for="banco">¿Cómo se arregla?</label>
+          <select id="banco">
+            <option value="nov">El banco libera al que se va (novación)</option>
+            <option value="nueva">Hipoteca nueva para pagar todo (cancelar la vieja y compensar)</option>
+            <option value="sin">Sin hipoteca pendiente</option>
+          </select>
+        </div>
+      </div>
+    </form>
+    <div class="out" id="out" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t5">
+  <div class="sec-head">
+    <div class="eyebrow">Papeles</div>
+    <h2 id="t5">Qué papeles hacen falta según el divorcio</h2>
+  </div>
+  <div class="papers">
+    <article class="pap">
+      <h3>Divorcio de mutuo acuerdo en el juzgado</h3>
+      <p class="small muted">Obligatorio si hay hijos menores. 2–4 meses.</p>
+      <ul>
+        <li>Convenio regulador firmado por los dos, con abogado y procurador.</li>
+        <li>En el convenio se pone quién se queda la casa, la compensación, la hipoteca y el uso.</li>
+        <li>Sentencia que aprueba el convenio.</li>
+        <li>Con la sentencia y el convenio se inscribe la vivienda familiar en el Registro, sin escritura. Para otros inmuebles, suele pedirse escritura.</li>
+      </ul>
+    </article>
+    <article class="pap">
+      <h3>Divorcio ante notario</h3>
+      <p class="small muted">Solo sin hijos menores ni con discapacidad. 1–4 semanas.</p>
+      <ul>
+        <li>Escritura de divorcio con convenio regulador, con abogado.</li>
+        <li>En la misma escritura se puede liquidar gananciales o extinguir el condominio.</li>
+        <li>Si hay separación de bienes, pregunta al notario por el AJD: Hacienda andaluza puede cobrarlo.</li>
+      </ul>
+    </article>
+    <article class="pap">
+      <h3>Divorcio contencioso</h3>
+      <p class="small muted">Sin acuerdo. 1–2 años.</p>
+      <ul>
+        <li>Al principio se piden <b>medidas provisionales</b>: el juez decide quién usa la casa mientras dura el proceso (auto de medidas).</li>
+        <li>La sentencia decide uso, pensiones e hijos, pero <b>no reparte la casa</b>.</li>
+        <li>El reparto va en un procedimiento aparte de liquidación de gananciales o división de la cosa común.</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t6">
+  <div class="sec-head">
+    <div class="eyebrow">Divorcio y VPO</div>
+    <h2 id="t6">"Quiero pedir una VPO, pero tengo media casa y el divorcio está en trámite"</h2>
+  </div>
+  <div class="bridge">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <p>Para una VPO no se puede ser dueño de otra vivienda. Hay una excepción para quien, por <b>separación o divorcio</b>, sigue siendo dueño pero ha perdido el uso de la casa por resolución judicial.</p>
+      <p><b>Con el divorcio solo en trámite, normalmente todavía no se cumple</b>: hace falta un papel que diga que la casa la usa el otro o que ya no es tuya.</p>
+      <p class="small muted">Además, la nueva Ley de Vivienda de Andalucía pone como grupo preferente a las personas que vienen de una ruptura familiar.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <h3>Qué papel te sirve, de menos a más seguro</h3>
+      <ol>
+        <li><b>Demanda presentada:</b> algunos registros municipales dejan inscribirse, pero piden la sentencia antes de adjudicar. Pregunta en tu municipio (en Sevilla, EMVISESA).</li>
+        <li><b>Auto de medidas provisionales</b> que da el uso de la casa al otro: suele valer para acreditar que no tienes vivienda donde vivir.</li>
+        <li><b>Sentencia o convenio aprobado</b> que atribuye el uso al otro: es la excepción clásica.</li>
+        <li><b>Extinción de condominio o liquidación</b> en la que el otro se queda tu parte: dejas de ser dueño y cumples sin excepciones.</li>
+      </ol>
+      <p class="small">Todo sobre requisitos, ingresos y cómo comprar o vender una VPO, en la <a href="vpo.html">Guía de la VPO</a>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t7">
+  <div class="sec-head">
+    <div class="eyebrow">Dudas frecuentes</div>
+    <h2 id="t7">Lo que siempre preguntan</h2>
+  </div>
+  <div class="lib">
+    <div>
+      <details>
+        <summary>El uso de la vivienda con hijos menores</summary>
+        <div class="dc">
+          <p>El juez suele dar el uso de la casa a los hijos menores y al progenitor que se queda con ellos, aunque la casa sea de los dos o solo del otro. El uso no cambia la propiedad.</p>
+          <ul>
+            <li>El otro sigue siendo dueño y, normalmente, sigue pagando su parte de la hipoteca (es deuda de los dos).</li>
+            <li>El uso suele durar hasta que los hijos son mayores de edad. Se puede revisar si el que vive se casa o convive con otra pareja en esa casa.</li>
+            <li>Se puede vender con el uso, pero el comprador debe respetarlo: casi nadie compra así, o paga mucho menos.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>La hipoteca: el banco no tiene por qué aceptar</summary>
+        <div class="dc">
+          <p>Aunque el convenio diga que la hipoteca la paga uno, para el banco siguen debiendo los dos. Para que el que se va quede libre:</p>
+          <ul>
+            <li><b>Novación con liberación:</b> el banco acepta que quede solo uno, si con sus ingresos puede pagar. Comisión (si la hay), notaría y registro: 300–1.000 €.</li>
+            <li><b>Hipoteca nueva</b> en otro banco: cancela la vieja y paga la compensación. Tasación (300–500 €) y, si se cambia de banco, cancelación de la anterior.</li>
+            <li>Si ningún banco acepta, la salida suele ser vender.</li>
+          </ul>
+          <p>Conviene tener el visto bueno del banco <b>antes</b> de firmar el convenio.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Cómo se calcula la compensación?</summary>
+        <div class="dc">
+          <p>Lo normal: <b>(valor de la casa − hipoteca pendiente) × % del que se va</b>. El que se queda asume toda la hipoteca.</p>
+          <p><b>Ejemplo:</b> casa de 200.000 € con 80.000 € de hipoteca, al 50 %. Compensación: (200.000 − 80.000) × 50 % = 60.000 €. El que se queda paga 60.000 € y asume los 80.000 € de hipoteca.</p>
+          <p>Las partes pueden pactar otro valor. En gananciales, la compensación también tiene en cuenta el resto de bienes y deudas del inventario.</p>
+        </div>
+      </details>
+      <details>
+        <summary>La deducción por vivienda de antes de 2013</summary>
+        <div class="dc">
+          <p>Quien compró antes de 2013 y deducía por vivienda habitual puede seguir deduciendo por lo que paga de la hipoteca de la casa donde viven sus hijos y su ex, aunque él ya no viva allí. Y si se queda la parte del otro, puede seguir deduciendo por su parte original, pero no por la nueva.</p>
+        </div>
+      </details>
+    </div>
+    <div>
+      <details>
+        <summary>Si después venden la casa: IRPF y plusvalía</summary>
+        <div class="dc">
+          <p>Como el reparto en el divorcio no cuenta como venta, en la venta posterior se toman la <b>fecha y el valor de compra originales</b>. Para la plusvalía municipal, los años se cuentan desde la compra original, no desde el divorcio.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Separados de hecho, sin papeles</summary>
+        <div class="dc">
+          <p>Sin sentencia ni convenio no hay nada: siguen casados en gananciales, todo lo que se compra sigue siendo de los dos y no se puede pedir VPO. Si van a tardar en divorciarse, se puede firmar ante notario un cambio a separación de bienes (capitulaciones) y liquidar los gananciales.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Uno no quiere vender ni comprar</summary>
+        <div class="dc">
+          <ul>
+            <li>En gananciales: procedimiento de liquidación de gananciales en el juzgado.</li>
+            <li>En condominio: acción de división de la cosa común. Nadie está obligado a seguir siendo copropietario.</li>
+            <li>Si la casa no se puede dividir y ninguno compra, el juez ordena la subasta. Antes, conviene una mediación o una oferta por escrito.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>Una casa que era de uno antes de casarse</summary>
+        <div class="dc">
+          <p>Si la compró uno antes de casarse, es suya (privativa), aunque la hipoteca se haya pagado en parte con dinero ganancial. En ese caso el otro tiene derecho a que se le devuelva la mitad de lo pagado de hipoteca durante el matrimonio, con su actualización. Si la compraron los dos antes de casarse, es un condominio normal.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="ck" aria-labelledby="ckT">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:70ch">
+    <div class="eyebrow">Antes de vender</div>
+    <h2 id="ckT">Los 6 puntos que se revisan antes de poner una casa a la venta</h2>
+    <p class="muted">Es el informe jurídico que se hace antes de publicar una vivienda. Si uno falla, se resuelve antes de firmar arras, no en la notaría.</p>
+  </div>
+  <div class="ck-grid">
+    <div class="ck-item"><span class="ck-n">1</span><div><h3>Propietarios</h3><p>Los que firman tienen que ser los mismos que salen en la nota simple, todos y con DNI. Si falta una herencia o un divorcio por resolver, se hace primero.</p><a href="guia-herencia.html">Guía de la Herencia →</a> </div></div>
+    <div class="ck-item"><span class="ck-n">2</span><div><h3>VPO</h3><p>Si es protegida: tipo, antigüedad, precio máximo y autorización de la Junta. Y si hay derecho de tanteo (de la Junta o, en Sevilla, de EMVISESA). A veces conviene pedir la descalificación.</p><a href="vpo.html">Guía de la VPO →</a></div></div>
+    <div class="ck-item"><span class="ck-n">3</span><div><h3>Cargas</h3><p>Hipotecas, embargos o condiciones resolutorias que salgan en la nota simple. Se cancelan antes o en la misma firma, con el dinero de la venta.</p></div></div>
+    <div class="ck-item"><span class="ck-n">4</span><div><h3>Superficie</h3><p>Que coincidan los metros del Catastro y de la nota simple, y que la casa esté declarada como es (sin plantas ni ampliaciones fuera del Registro).</p><a href="regularizar.html">Regularizar la Vivienda →</a></div></div>
+    <div class="ck-item"><span class="ck-n">5</span><div><h3>Fiscalidad</h3><p>Fecha y precio de compra, IRPF que pagará el vendedor (o si puede reinvertir) y plusvalía municipal.</p><a href="reinversion.html">Reinversión IRPF →</a></div></div>
+    <div class="ck-item"><span class="ck-n">6</span><div><h3>Situación familiar</h3><p>Divorcios, separaciones o viviendas en las que el otro tiene el uso: condicionan quién firma y qué impuestos hay.</p><span class="here">Lo explica esta web.</span></div></div>
+  </div>
+  <div class="ck-docs">
+    <div><h3>Papeles que se piden al vendedor</h3><ul>
+      <li>Escritura de la vivienda</li><li>DNI de todos los propietarios, con teléfono y correo</li><li>Último recibo del IBI</li><li>Último recibo de comunidad</li><li>Certificado energético (si no lo tiene, se encarga)</li><li>Antes de firmar: certificado de la comunidad de estar al corriente, estar al día del IBI y certificado de deuda del banco si hay hipoteca</li>
+    </ul></div>
+    <div><h3>En la firma y después</h3><ul>
+      <li>Antes de la notaría se entrega a cada parte la liquidación: lo que cobra o paga cada uno</li><li>El IBI del año se reparte entre vendedor y comprador en la propia notaría, para no reclamarlo después</li><li>Las cargas se cancelan con el dinero de la venta</li><li>Después: plusvalía municipal, cambio de luz, agua, comunidad y vado, y entrega de llaves</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Guía orientativa</b> basada en el Código Civil, el art. 45 de la Ley del ITP-AJD, el art. 104.3 de la Ley de Haciendas Locales, la Ley del IRPF y el tipo de AJD de Andalucía (1,2 %), a octubre de 2026. Cada divorcio es distinto: confirma con abogado, notario y banco antes de firmar el convenio.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const fmt=n=>(n<0?'−':'')+String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €';
+  const rng=(a,b)=>Math.round(a)===Math.round(b)?fmt(a):fmt(a)+' – '+fmt(b);
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const IDS=['reg','via','valor','hip','pct','compra','gc','m65','rein','banco'];
+  const EX={reg:'sep',via:'jud',valor:200000,hip:80000,pct:50,compra:150000,gc:12000,m65:false,rein:false,banco:'nov'};
+  const TR=[[6000,.19],[50000,.21],[200000,.23],[300000,.27],[Infinity,.30]];
+  const tabla=b=>{let t=0,p=0;for(const[l,r]of TR){if(b<=p)break;t+=(Math.min(b,l)-p)*r;p=l;}return t;};
+  function load(d){ for(const k in d){ const e=$(k); if(!e) continue; if(e.type==='checkbox') e.checked=!!d[k]; else e.value=d[k]; } }
+  function read(){ const o={}; IDS.forEach(k=>{ const e=$(k); o[k]=e.type==='checkbox'?e.checked:(e.type==='number'?(e.value===''?0:Math.max(0,parseFloat(e.value))):e.value); }); return o; }
+
+  function render(){
+    const s=read();
+    $('wVia').hidden = s.reg==='ph';
+    const p=Math.min(Math.max(s.pct||50,1),99)/100;
+    const equity=s.valor-s.hip, comp=equity*p;
+    const alerts=[], costs=[], st=[];
+
+    // AJD
+    let ajdLo=0, ajdHi=0, ajdTxt='';
+    if(s.reg==='gan'){ ajdTxt='Exento: liquidación de gananciales'; }
+    else if(s.reg==='sep' && s.via==='jud'){ ajdTxt='Exento: va en el convenio aprobado por el juez'; }
+    else { ajdLo=s.valor*p*0.012; ajdHi=s.valor*0.012; ajdTxt= s.reg==='ph'?'Pareja de hecho: 1,2 %':'Fuera del convenio judicial: 1,2 %'; }
+    // Plusvalía
+    const plusTxt = s.reg==='ph' ? 'Normalmente no: repartir la copropiedad sin exceso no es transmisión' : 'No sujeta por ser consecuencia del divorcio';
+    // IRPF cedente
+    let gan=0, irpf=0, irpfTxt='';
+    if(s.reg==='gan'){ irpfTxt='Normalmente no: liquidar gananciales no es vender.'; }
+    else {
+      gan = s.valor*p - (s.compra+s.gc)*p;
+      if(gan<=0) irpfTxt='No hay ganancia: su parte vale menos de lo que le costó.';
+      else if(s.m65) irpfTxt='Exento si era su vivienda habitual y tiene 65 años o más.';
+      else if(s.rein) irpfTxt='Puede quedar exento si reinvierte en otra vivienda habitual. Calcúlalo en Reinversión IRPF.';
+      else { irpf=tabla(gan); irpfTxt='Ganancia de '+fmt(gan)+': '+fmt(s.valor*p)+' de su parte − '+fmt((s.compra+s.gc)*p)+' que le costó.'; }
+    }
+
+    // Costes del que se queda
+    const necesitaEscritura = !(s.reg!=='ph' && s.via==='jud');
+    if(necesitaEscritura) costs.push(['Notaría: '+(s.reg==='gan'?'liquidación de gananciales':'extinción de condominio'),500,1200]);
+    else costs.push(['Notaría: no hace falta para la vivienda familiar (basta convenio y sentencia)',0,0]);
+    costs.push(['Registro de la Propiedad',150,400]);
+    if(ajdHi>0) costs.push(['AJD (Junta de Andalucía) 1,2 %',ajdLo,ajdHi]);
+    if(s.banco==='nov' && s.hip>0) costs.push(['Novación de la hipoteca (comisión, notaría, registro)',300,1000]);
+    if(s.banco==='nueva') costs.push(['Hipoteca nueva: tasación y gastos que no paga el banco',300,900]);
+    const tLo=costs.reduce((a,c)=>a+c[1],0), tHi=costs.reduce((a,c)=>a+c[2],0);
+    const nueva = s.banco==='nueva' ? s.hip+comp : 0;
+
+    if(s.reg==='ph') alerts.push(['warn','Pareja de hecho: no hay ventajas de divorcio','Paga AJD y se hace siempre por escritura ante notario. Si uno cede su parte sin cobrar, Hacienda lo trata como donación.']);
+    if(s.reg==='sep' && s.via!=='jud') alerts.push(['warn','Meterlo en el convenio judicial ahorra el AJD', 'Si se hace dentro del convenio aprobado por el juez, no se paga AJD. Fuera de él, entre '+rng(ajdLo,ajdHi)+' (Hacienda puede calcularlo sobre la parte que se adquiere o sobre el total).']);
+    if(s.hip>0 && s.banco!=='sin') alerts.push(['','Primero, el banco','Antes de firmar el convenio, pide al banco por escrito que acepta '+(s.banco==='nov'?'liberar al que se va':'la hipoteca nueva de '+fmt(nueva))+'. Si no, el que se va seguirá debiendo aunque ya no sea dueño.']);
+    if(irpf>0) alerts.push(['warn','El que se va paga IRPF','Unos '+fmt(irpf)+' en la renta del año siguiente. Se ahorra si compra otra vivienda habitual en 2 años por al menos su compensación (lo que recibe en dinero).']);
+    if(comp<0) alerts.push(['bad','La hipoteca es mayor que el valor','No hay nada que compensar: el que se queda asume más deuda que valor. Valorad vender o negociar con el banco.']);
+
+    st.push({t:'Tasar la casa y pedir el saldo de la hipoteca', p:'Para fijar la compensación con números reales. Una tasación o valoración de agencia, y un certificado de deuda pendiente del banco.', d:'Agencia, tasadora y banco', pl:'1–2 semanas', c:'0–400 €'});
+    if(s.hip>0) st.push({t:'Pedir al banco que acepte el cambio', p: s.banco==='nueva'?'Hipoteca nueva a nombre del que se queda por '+fmt(nueva)+' para cancelar la actual y pagar la compensación.':'Que libere al que se va y deje la hipoteca solo a nombre del que se queda.', d:'Banco', pl:'2–6 semanas', c: s.banco==='nueva'?'300–900 €':'300–1.000 €'});
+    if(s.reg==='ph') st.push({t:'Firmar la extinción de condominio', p:'Escritura ante notario: uno se adjudica la casa y paga la compensación.', d:'Notaría', pl:'1–2 semanas', c:'500–1.200 €'});
+    else if(s.via==='jud') st.push({t:'Incluirlo en el convenio regulador', p:'El convenio dice quién se queda la casa, la compensación, cómo se paga y quién asume la hipoteca. El juez lo aprueba con la sentencia de divorcio.', d:'Abogado y juzgado', pl:'2–4 meses', c:'Honorarios del divorcio'});
+    else if(s.via==='not') st.push({t:'Firmar el divorcio ante notario con el reparto', p:'En la misma escritura de divorcio se '+(s.reg==='gan'?'liquidan los gananciales':'extingue el condominio')+'.', d:'Notaría, con abogado', pl:'1–4 semanas', c:'500–1.200 € + abogado'});
+    else st.push({t:'Firmar la escritura de '+(s.reg==='gan'?'liquidación de gananciales':'extinción de condominio'), p:'Después del divorcio, ante notario.', d:'Notaría', pl:'1–2 semanas', c:'500–1.200 €'});
+    if(ajdHi>0) st.push({t:'Pagar el AJD', p:'Modelo 600 en la Agencia Tributaria de Andalucía, en el mes siguiente a la firma.', d:'Agencia Tributaria de Andalucía', pl:'1 mes', c:rng(ajdLo,ajdHi)});
+    else st.push({t:'Presentar el modelo 600 como exento', p:'Aunque no se pague, se presenta indicando la exención, para que el Registro inscriba.', d:'Agencia Tributaria de Andalucía', pl:'1 mes', c:'0 €'});
+    st.push({t:'Comunicar la plusvalía municipal como no sujeta', p:'Se presenta en el Ayuntamiento para que conste que no hay que pagar.', d:'Ayuntamiento', pl:'6 meses', c:'0 €'});
+    st.push({t:'Inscribir en el Registro', p:'Con la sentencia y el convenio, o con la escritura.', d:'Registro de la Propiedad', pl:'2–4 semanas', c:'150–400 €'});
+    if(gan>0 && s.reg!=='gan') st.push({t:'El que se va: declararlo en la renta', p:'En la renta del año siguiente, como ganancia por la transmisión de su parte.'+(s.rein?' Marcando la exención por reinversión si compra otra vivienda habitual.':''), d:'Agencia Tributaria', pl:'Abril–junio del año siguiente', c: irpf>0?fmt(irpf):'0 €'});
+
+    $('out').innerHTML=`
+      <div class="card">
+        <div class="eyebrow">Resultado</div>
+        <div class="big">
+          <div><b class="num">${fmt(Math.max(comp,0))}</b><span>compensación al que se va</span></div>
+          <div><b class="num">${fmt(s.hip)}</b><span>hipoteca que asume el que se queda</span></div>
+          ${nueva?`<div><b class="num">${fmt(nueva)}</b><span>hipoteca nueva necesaria</span></div>`:''}
+        </div>
+        <p class="small muted">(${fmt(s.valor)} − ${fmt(s.hip)}) × ${Math.round(p*100)} % = ${fmt(comp)}</p>
+        <div class="sides">
+          <div class="side a"><h3>El que se queda la casa</h3><ul>
+            <li>Paga ${fmt(Math.max(comp,0))} al otro</li>
+            <li>Asume la hipoteca de ${fmt(s.hip)}</li>
+            <li>AJD: ${esc(ajdHi>0?rng(ajdLo,ajdHi):'0 €')}</li>
+            <li>Gastos: ${rng(tLo,tHi)} en total</li>
+            <li>IRPF: no paga</li></ul></div>
+          <div class="side b"><h3>El que se va</h3><ul>
+            <li>Cobra ${fmt(Math.max(comp,0))}</li>
+            <li>Queda libre de la hipoteca${s.hip>0?' si el banco lo acepta':''}</li>
+            <li>IRPF: ${irpf>0?fmt(irpf):'0 €'}</li>
+            <li class="muted">${esc(irpfTxt)}</li>
+            <li>Ya puede pedir VPO o hipoteca nueva</li></ul></div>
+        </div>
+      </div>
+      ${alerts.length?`<div class="alerts">${alerts.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join('')}</div>`:''}
+      <div class="card">
+        <div class="eyebrow">Impuestos de esta operación</div>
+        <div class="tbl"><table class="costs"><tbody>
+          <tr><td>AJD</td><td>${esc(ajdTxt)}</td><td class="r">${ajdHi>0?rng(ajdLo,ajdHi):'0 €'}</td></tr>
+          <tr><td>Plusvalía municipal</td><td>${esc(plusTxt)}</td><td class="r">0 €</td></tr>
+          <tr><td>IRPF del que se va</td><td>${esc(irpfTxt)}</td><td class="r">${fmt(irpf)}</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Paso a paso</div>
+        <ol class="route">${st.map(x=>`<li><div><h3>${esc(x.t)}</h3><p>${esc(x.p)}</p><div class="meta"><span>Dónde: <b>${esc(x.d)}</b></span><span>Plazo: <b>${esc(x.pl)}</b></span><span>Coste: <b>${esc(x.c)}</b></span></div></div></li>`).join('')}</ol>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Gastos del que se queda la casa</div>
+        <div class="tbl"><table class="costs"><thead><tr><th>Concepto</th><th class="r">Mínimo</th><th class="r">Máximo</th></tr></thead><tbody>
+          ${costs.map(c=>`<tr><td>${esc(c[0])}</td><td class="r">${fmt(c[1])}</td><td class="r">${fmt(c[2])}</td></tr>`).join('')}
+          <tr class="sub"><td>Total</td><td class="r">${fmt(tLo)}</td><td class="r">${fmt(tHi)}</td></tr></tbody></table></div>
+        <p class="small muted">Sin contar abogados ni procurador del divorcio. Lo normal es que estos gastos los pague el que se queda la casa, pero se puede pactar otra cosa.</p>
+      </div>`;
+  }
+  function save(){ try{ localStorage.setItem('divorcio-caso', JSON.stringify(read())); }catch(e){} }
+  $('f').addEventListener('input',()=>{render();save();});
+  $('f').addEventListener('change',()=>{render();save();});
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('divorcio-caso')||'null'); }catch(e){}
+  load(Object.assign({},EX,saved||{}));
+  render();
+})();
+</script>
+
+<script>if(window.top!==window.self){var b=document.querySelector(".backbar");if(b)b.remove();}</script>
+</body>
+</html>

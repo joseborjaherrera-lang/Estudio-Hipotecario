@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#082d74">
+<title>Reinversión IRPF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera + lo básico (4 fichas) + árbol de decisión con 4 casos clicables + calculadora (formulario / explicación paso a paso) + desplegables */
+:root{
+  --bg:#F6F4F5; --surface:#FFFFFF; --ink:#1D1619; --muted:#64575D; --line:#E0D8DC;
+  --accent:#7B2D45; --accent-soft:#F3E3E8; --gold:#9A6B12;
+  --warn:#8A5300; --warn-soft:#FBEFD8; --bad:#9E2F2A; --bad-soft:#F8E2DF; --ok:#2B663B; --ok-soft:#E1EFE4;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151012; --surface:#1E171A; --ink:#EEE6E9; --muted:#A8999F; --line:#352A2F;
+  --accent:#E393AC; --accent-soft:#3A2129; --gold:#E0B460;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151012; --surface:#1E171A; --ink:#EEE6E9; --muted:#A8999F; --line:#352A2F;
+  --accent:#E393AC; --accent-soft:#3A2129; --gold:#E0B460;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:52px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.1rem,5vw,3.2rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,3vw,1.95rem)}
+h3{font-size:1.18rem}
+p{margin:0}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:.86rem}
+.num{font-variant-numeric:tabular-nums}
+.sec{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+
+header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:36px;align-items:end;border-bottom:1px solid var(--line);padding-bottom:28px}
+header .lead{font-size:1.12rem;max-width:58ch;color:var(--muted);margin-top:14px}
+.scale{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.scale table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+.scale td{padding:5px 0;border-bottom:1px dashed var(--line)}
+.scale tr:last-child td{border-bottom:none}
+.scale td:last-child{text-align:right;font-family:var(--mono);font-weight:500;color:var(--accent)}
+
+.basics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.bcard p{font-size:.92rem}
+.formula{font-family:var(--mono);font-size:.82rem;background:var(--bg);border-radius:8px;padding:10px 12px;line-height:1.5}
+
+/* Árbol */
+.tree{display:flex;flex-direction:column;align-items:center;gap:0}
+.q{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.node{background:var(--surface);border:1.5px solid var(--ink);border-radius:10px;padding:9px 16px;font-weight:600;font-size:.95rem;text-align:center}
+.node.end{border-style:dashed;border-color:var(--ok);color:var(--ok);font-weight:600;font-size:.88rem}
+.lbl{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.vline{width:1.5px;height:22px;background:var(--ink)}
+.leaves{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;width:100%;margin-top:0;position:relative;padding-top:22px}
+.leaves::before{content:"";position:absolute;top:0;left:12.5%;right:12.5%;height:1.5px;background:var(--ink)}
+.leaf{position:relative;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.leaf::before{content:"";position:absolute;top:-22px;left:50%;width:1.5px;height:22px;background:var(--ink)}
+.leaf:hover,.leaf:focus-visible{border-color:var(--accent)}
+.leaf.on{border-color:var(--accent);background:var(--accent-soft)}
+.leaf .tag{font-family:var(--mono);font-size:.72rem;color:var(--gold);font-weight:500}
+.leaf h3{font-size:1.08rem}
+.leaf .calc{font-family:var(--mono);font-size:.76rem;line-height:1.55;color:var(--muted);white-space:pre-line}
+.leaf .res{font-weight:700;font-size:.95rem;margin-top:auto}
+.leaf .go{font-size:.78rem;color:var(--accent);font-weight:600}
+
+/* Calculadora */
+.tool{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.86rem;font-weight:600}
+.help{font-size:.77rem;color:var(--muted);line-height:1.35}
+select,input[type=number]{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;font-variant-numeric:tabular-nums}
+select:focus-visible,input:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;line-height:1.35}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.grp{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.grp-t{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+.out{display:flex;flex-direction:column;gap:22px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.big{display:flex;flex-wrap:wrap;gap:28px}
+.big div{display:flex;flex-direction:column}
+.big b{font-family:var(--display);font-size:2.1rem;font-weight:600;line-height:1.1}
+.big b.pay{color:var(--accent)}
+.big span{font-size:.82rem;color:var(--muted)}
+.bar{height:12px;border-radius:99px;background:var(--bad-soft);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;background:var(--ok)}
+.barl{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.steps li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.steps li:last-child{border-bottom:none}
+.steps .t{font-size:.94rem}
+.steps .t small{display:block;font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:2px}
+.steps .v{font-family:var(--mono);font-weight:500;white-space:nowrap;text-align:right}
+.steps li.hl .v{color:var(--accent);font-weight:600}
+.alerts{display:flex;flex-direction:column;gap:10px}
+.alert{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 8px 8px 0;font-size:.92rem}
+.alert.warn{border-color:var(--warn);background:var(--warn-soft)} .alert.ok{border-color:var(--ok);background:var(--ok-soft)}
+.alert b{display:block;margin-bottom:2px}
+table.tr{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+.tr th,.tr td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+.tr th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tr td.r,.tr th.r{text-align:right}
+.tr tr.sub td{font-weight:700;border-top:2px solid var(--ink)}
+
+.lib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 28px;align-items:start}
+.lib > div{display:flex;flex-direction:column;gap:12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details[open]{border-color:var(--accent)}
+summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:600;position:relative;line-height:1.35}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.dc{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:.94rem}
+.dc ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted);max-width:80ch}
+
+@media (max-width:980px){ .basics{grid-template-columns:1fr 1fr} .leaves{grid-template-columns:1fr 1fr} .leaves::before,.leaf::before{display:none} }
+@media (max-width:900px){ header{grid-template-columns:1fr;gap:20px} .tool{grid-template-columns:1fr} .form{position:static;max-height:none} .lib{grid-template-columns:1fr} }
+@media (max-width:560px){ .basics{grid-template-columns:1fr} .leaves{grid-template-columns:1fr} }
+@media (max-width:420px){ .row2{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.ck{display:flex;flex-direction:column;gap:18px}
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ck-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;min-width:0}
+.ck-n{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.ck-item h3{font-size:1.02rem;margin:0 0 3px}
+.ck-item p{font-size:.88rem;margin:0}
+.ck-item a{font-size:.84rem;font-weight:600}
+.ck-item .here{font-size:.8rem;color:var(--muted)}
+.ck-docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.ck-docs ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+@media (max-width:900px){ .ck-grid{grid-template-columns:1fr} .ck-docs{grid-template-columns:1fr} }
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>.backbar{display:flex;margin-bottom:-28px}.backbar a{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;font-weight:700;color:#082d74;text-decoration:none;background:#fff;border:1px solid #e0e3f0;border-radius:999px;padding:7px 14px;box-shadow:0 1px 2px rgba(16,19,42,.05)}.backbar a:hover{border-color:#b9c2de}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .backbar a{background:#1b2030;color:#cfd8f5;border-color:#2c3348}}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="backbar"><a href="index.html">‹ Herramientas</a></div>
+
+<header>
+  <div>
+    <div class="eyebrow">IRPF · venta de vivienda · 2026</div>
+    <h1>¿Cuánto paga a Hacienda al vender su casa?</h1>
+    <p class="lead">Al vender una vivienda con beneficio se paga IRPF por la ganancia. Si era su vivienda habitual y compra otra, puede pagar menos o nada. Aquí se ve cuánto, con el cálculo explicado paso a paso.</p>
+  </div>
+  <div class="scale">
+    <div class="eyebrow">Tabla del ahorro (por persona)</div>
+    <table>
+      <tr><td>Hasta 6.000 €</td><td>19 %</td></tr>
+      <tr><td>De 6.000 a 50.000 €</td><td>21 %</td></tr>
+      <tr><td>De 50.000 a 200.000 €</td><td>23 %</td></tr>
+      <tr><td>De 200.000 a 300.000 €</td><td>27 %</td></tr>
+      <tr><td>Más de 300.000 €</td><td>30 %</td></tr>
+    </table>
+    <span class="small muted">Cada tramo se aplica solo a la parte que cae en él.</span>
+  </div>
+</header>
+
+<section class="sec" aria-labelledby="t1">
+  <div class="sec-head">
+    <div class="eyebrow">Lo básico</div>
+    <h2 id="t1">Cuatro ideas para entenderlo</h2>
+  </div>
+  <div class="basics">
+    <article class="bcard">
+      <h3>La ganancia</h3>
+      <p>Hacienda no cobra por lo que vendes, sino por lo que <b>ganas</b>: la diferencia entre lo que te costó y lo que te pagan, descontando gastos.</p>
+      <div class="formula">(Venta − gastos de venta)<br>− (Compra + gastos de compra + mejoras)<br>= Ganancia</div>
+    </article>
+    <article class="bcard">
+      <h3>Los gastos cuentan</h3>
+      <p>De la compra: notaría, registro, ITP o IVA, gestoría, agencia y obras de mejora con factura. De la venta: comisión de la agencia, plusvalía municipal, certificado energético. Todos bajan la ganancia.</p>
+    </article>
+    <article class="bcard">
+      <h3>La reinversión</h3>
+      <p>Si vendes tu <b>vivienda habitual</b> y compras otra vivienda habitual en los 2 años antes o después, la ganancia queda exenta en la proporción que reinviertas.</p>
+      <div class="formula">Lo que hay que reinvertir<br>= Venta − hipoteca pendiente</div>
+    </article>
+    <article class="bcard">
+      <h3>Mayores de 65</h3>
+      <p>Si tienes 65 años o más y vendes tu vivienda habitual, <b>no pagas nada</b>, reinviertas o no. Lo mismo con dependencia severa o gran dependencia.</p>
+    </article>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t2">
+  <div class="sec-head">
+    <div class="eyebrow">El esquema</div>
+    <h2 id="t2">¿Qué camino te toca?</h2>
+    <p class="muted">Pulsa un caso para cargarlo en la calculadora de abajo. Los ejemplos no llevan gastos, para que se vean claras las cuentas.</p>
+  </div>
+  <div class="tree">
+    <div class="q"><span class="node">¿Hay ganancia?</span><span class="lbl">no →</span><span class="node end">No se paga nada</span></div>
+    <div class="vline"></div><span class="lbl">sí</span><div class="vline"></div>
+    <div class="q"><span class="node">¿Vivienda habitual y 65 años o más?</span><span class="lbl">sí →</span><span class="node end">Exento</span></div>
+    <div class="vline"></div><span class="lbl">no</span><div class="vline"></div>
+    <div class="q"><span class="node">¿Reinviertes en otra vivienda habitual?</span></div>
+    <div class="vline"></div>
+    <div class="leaves" role="group" aria-label="Casos">
+      <button type="button" class="leaf" data-ex="total"><span class="tag">SÍ · TOTAL</span><h3>Reinversión total</h3>
+        <span class="calc">Venta 200.000 €
+Hipoteca pendiente 120.000 €
+200.000 − 120.000 = 80.000 €
+Nueva vivienda de 80.000 € o más</span>
+        <span class="res">Pagas 0 €</span><span class="go">Ver en la calculadora →</span></button>
+      <button type="button" class="leaf" data-ex="parcial"><span class="tag">SÍ · PARCIAL</span><h3>Parcial sin hipoteca</h3>
+        <span class="calc">Venta 200.000 € · compra 100.000 €
+Ganancia 100.000 €
+Nueva 175.000 / 200.000 = 87,5 %
+12,5 % tributa = 12.500 €</span>
+        <span class="res">Pagas 2.505 €</span><span class="go">Ver en la calculadora →</span></button>
+      <button type="button" class="leaf" data-ex="parcialHip"><span class="tag">SÍ · PARCIAL</span><h3>Parcial con hipoteca</h3>
+        <span class="calc">Venta 200.000 € · compra 140.000 €
+Hipoteca 40.000 € · ganancia 60.000 €
+200.000 − 40.000 = 160.000 €
+Nueva 120.000 / 160.000 = 75 %
+25 % tributa = 15.000 €</span>
+        <span class="res">Pagas 3.030 €</span><span class="go">Ver en la calculadora →</span></button>
+      <button type="button" class="leaf" data-ex="no"><span class="tag">NO REINVIERTES</span><h3>Toda la ganancia tributa</h3>
+        <span class="calc">Venta 200.000 € · compra 100.000 €
+Ganancia 100.000 €
+Toda a la tabla</span>
+        <span class="res">Pagas 21.880 €</span><span class="go">Ver en la calculadora →</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t3">
+  <div class="sec-head">
+    <div class="eyebrow">Calculadora</div>
+    <h2 id="t3">Tu caso, con gastos y propietarios</h2>
+  </div>
+  <div class="tool">
+    <form class="form" id="f" onsubmit="return false">
+      <div class="field">
+        <label for="tipo">La vivienda que se vende era…</label>
+        <select id="tipo">
+          <option value="hab">Vivienda habitual (3 años o más viviendo en ella)</option>
+          <option value="nohab">Segunda vivienda, alquilada o menos de 3 años</option>
+        </select>
+      </div>
+      <label class="check" id="w65"><input type="checkbox" id="mayor65"> El vendedor tiene 65 años o más</label>
+
+      <div class="grp">
+        <div class="grp-t">La venta</div>
+        <div class="row2">
+          <div class="field"><label for="venta">Precio de venta</label><input type="number" id="venta" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="gVenta">Gastos de venta</label><input type="number" id="gVenta" min="0" step="100" inputmode="numeric"></div>
+        </div>
+        <span class="help">Gastos: comisión de agencia, plusvalía municipal, certificado energético, cancelación registral de hipoteca.</span>
+        <div class="field" id="wHip"><label for="hip">Hipoteca pendiente al vender</label><input type="number" id="hip" min="0" step="1000" inputmode="numeric"><span class="help">Lo que se cancela con el dinero de la venta.</span></div>
+      </div>
+
+      <div class="grp">
+        <div class="grp-t">Cuando se compró</div>
+        <div class="field">
+          <label for="origen">¿Cómo se adquirió?</label>
+          <select id="origen">
+            <option value="compra">Comprada</option>
+            <option value="herencia">Heredada o donada</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="compra" id="lCompra">Precio de compra</label><input type="number" id="compra" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="gCompra" id="lGCompra">Gastos de compra</label><input type="number" id="gCompra" min="0" step="100" inputmode="numeric"></div>
+        </div>
+        <span class="help" id="hCompra">Notaría, registro, ITP o IVA, gestoría, agencia. Si no los tienes, en Andalucía suelen ser un 8–10 % del precio en segunda mano.</span>
+        <div class="row2">
+          <div class="field"><label for="mejoras">Mejoras o ampliaciones</label><input type="number" id="mejoras" min="0" step="500" inputmode="numeric"><span class="help">Solo obras que añaden algo nuevo o amplían. No valen reparaciones ni cambiar lo viejo por nuevo. Mira "¿Qué obras se pueden sumar?".</span></div>
+          <div class="field"><label for="anio">Año de compra</label><input type="number" id="anio" min="1950" max="2026" step="1" inputmode="numeric"></div>
+        </div>
+        <div class="field" id="wAmort"><label for="amort">Amortizaciones deducidas (si estuvo alquilada)</label><input type="number" id="amort" min="0" step="100" inputmode="numeric"><span class="help">Lo que se dedujo como amortización en la renta mientras estuvo alquilada. Se resta del coste aunque no se dedujera.</span></div>
+      </div>
+
+      <div class="grp" id="wRein">
+        <div class="grp-t">Reinversión</div>
+        <div class="field">
+          <label for="rein">¿Compra otra vivienda habitual?</label>
+          <select id="rein">
+            <option value="si">Sí, en los 2 años antes o después de la venta</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="field" id="wNueva"><label for="nueva">Precio de la nueva vivienda (con sus gastos)</label><input type="number" id="nueva" min="0" step="1000" inputmode="numeric"><span class="help">Cuenta entero aunque se pague con hipoteca.</span></div>
+      </div>
+
+      <div class="grp">
+        <div class="grp-t">Propietarios</div>
+        <div class="row2">
+          <div class="field">
+            <label for="nProp">Nº de propietarios</label>
+            <select id="nProp"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+          </div>
+          <div class="field" id="wPct"><label for="pct">% del primero</label><input type="number" id="pct" min="1" max="99" step="1" inputmode="numeric"><span class="help">El resto, a partes iguales.</span></div>
+        </div>
+      </div>
+    </form>
+
+    <div class="out" id="out" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="tv">
+  <div class="sec-head">
+    <div class="eyebrow">Vender para comprar</div>
+    <h2 id="tv">¿Te salen las cuentas?</h2>
+    <p class="muted">Lo que te queda al vender (precio − gastos − hipoteca − IRPF), lo que cuesta comprar (precio + impuestos + gastos) y la hipoteca que necesitas para la diferencia, con su cuota.</p>
+  </div>
+  <div class="tool">
+    <form class="form" id="fv" onsubmit="return false">
+      <button type="button" class="btn" id="vTraer" style="font:inherit;font-size:.84rem;font-weight:600;background:none;border:1px solid var(--line);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer;align-self:flex-start">Traer datos de la calculadora de arriba</button>
+      <div class="grp" style="border-top:0;padding-top:0">
+        <div class="grp-t">La venta</div>
+        <div class="row2">
+          <div class="field"><label for="vVenta">Precio de venta</label><input type="number" id="vVenta" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="vGV">Gastos de venta</label><input type="number" id="vGV" min="0" step="100" inputmode="numeric"><span class="help">Agencia, plusvalía municipal, CEE, cancelación.</span></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="vHip">Hipoteca pendiente</label><input type="number" id="vHip" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field"><label for="vIrpf">IRPF de la venta</label><input type="number" id="vIrpf" min="0" step="100" inputmode="numeric"><span class="help">Se paga en la renta del año siguiente.</span></div>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="grp-t">La compra</div>
+        <div class="row2">
+          <div class="field"><label for="vCompra">Precio de la nueva</label><input type="number" id="vCompra" min="0" step="1000" inputmode="numeric"></div>
+          <div class="field">
+            <label for="vTipo">Tipo de vivienda</label>
+            <select id="vTipo"><option value="usada">Segunda mano (ITP)</option><option value="nueva">Obra nueva (IVA + AJD)</option><option value="vpo">VPO nueva (IVA 4 % + AJD)</option></select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="vEsp"> Comprador menor de 35, familia numerosa o con discapacidad</label>
+        <div class="row2">
+          <div class="field"><label for="vNot">Notaría, registro y gestoría</label><input type="number" id="vNot" min="0" step="100" inputmode="numeric"></div>
+          <div class="field"><label for="vAho">Ahorros que aportas</label><input type="number" id="vAho" min="0" step="1000" inputmode="numeric"></div>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="grp-t">Hipoteca nueva</div>
+        <div class="row2">
+          <div class="field"><label for="vTin">Interés anual (%)</label><input type="number" id="vTin" min="0" max="15" step="0.05" inputmode="decimal"></div>
+          <div class="field"><label for="vAnos">Años</label><input type="number" id="vAnos" min="5" max="40" step="1" inputmode="numeric"></div>
+        </div>
+      </div>
+    </form>
+    <div class="out" id="vOut" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t4">
+  <div class="sec-head">
+    <div class="eyebrow">Dudas frecuentes</div>
+    <h2 id="t4">Lo que siempre preguntan</h2>
+  </div>
+  <div class="lib">
+    <div>
+      <details>
+        <summary>¿Qué cuenta como vivienda habitual?</summary>
+        <div class="dc">
+          <p>La casa donde se ha vivido de forma continuada al menos <b>3 años</b>. Se admite menos tiempo si hubo que mudarse por causas como fallecimiento, separación, traslado laboral, primer empleo o cambio de empleo.</p>
+          <p>Se prueba con el empadronamiento, los suministros, la dirección fiscal en la renta. También cuenta si se vende en los 2 años después de dejar de vivir en ella.</p>
+        </div>
+      </details>
+      <details>
+        <summary>El plazo de los 2 años y la nueva vivienda</summary>
+        <div class="dc">
+          <ul>
+            <li>La nueva vivienda puede comprarse hasta <b>2 años antes</b> o <b>2 años después</b> de la venta.</li>
+            <li>Hay que irse a vivir a ella en un máximo de <b>12 meses</b> desde la compra o el fin de obra.</li>
+            <li>Cuenta como reinversión lo que se paga con hipoteca nueva: el precio entero, no solo la entrada.</li>
+            <li>Construir una casa también vale si las obras se pagan en ese plazo.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>¿Por qué se resta la hipoteca pendiente?</summary>
+        <div class="dc">
+          <p>Porque la ley considera que el dinero que obtienes es la venta menos el préstamo que cancelas. Por eso con hipoteca hay que reinvertir menos para quedar exento.</p>
+          <p><b>Ejemplo:</b> vendes por 200.000 € y cancelas 40.000 € de hipoteca. No hace falta comprar por 200.000 €: con una casa de 160.000 € ya no pagas nada.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Cómo se declara</summary>
+        <div class="dc">
+          <ul>
+            <li>En la renta del año de la venta (se presenta entre abril y junio del año siguiente), apartado de ganancias por transmisión de inmuebles.</li>
+            <li>Se marca que se acoge a la exención por reinversión y el importe a reinvertir.</li>
+            <li>Si la compra será después, se declara el <b>compromiso de reinversión</b>.</li>
+            <li>Si al final no se reinvierte en plazo, hay que presentar una <b>complementaria</b> del año de la venta, con intereses de demora pero sin recargo.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>¿Qué obras se pueden sumar al valor de compra?</summary>
+        <div class="dc">
+          <p>La ley lo permite: el valor de compra incluye "el coste de las inversiones y mejoras" (art. 35.1 de la Ley del IRPF). Pero Hacienda es muy estricta y solo acepta <b>mejoras y ampliaciones</b>, no reparaciones ni conservación.</p>
+          <p><b>Sí suelen contar:</b></p>
+          <ul>
+            <li>Ampliar la casa: una habitación más, una planta, cerrar y hacer habitable un espacio.</li>
+            <li>Instalar algo que no existía: calefacción o aire acondicionado por conductos, ascensor, placas solares, un baño nuevo donde no había.</li>
+            <li>Rehabilitación de verdad: obras de estructura, fachada o cubierta que superan el 25 % del valor de la vivienda (sin el suelo).</li>
+          </ul>
+          <p><b>No cuentan:</b></p>
+          <ul>
+            <li>Pintar, cambiar suelos, alicatar el baño o la cocina.</li>
+            <li>Cambiar ventanas, puertas, tuberías, grifería o el cuadro eléctrico por estar viejos.</li>
+            <li>Sustituir la caldera o el aire que ya había.</li>
+            <li>Una "reforma integral" de cocina o baño que solo moderniza o redistribuye, sin añadir nada.</li>
+            <li>Muebles y electrodomésticos.</li>
+          </ul>
+          <p><b>Cómo probarlo:</b> facturas a nombre del propietario y pagadas por banco. Mejor aún con licencia de obras, proyecto o presupuesto detallado partida por partida. Una factura que solo dice "reforma" no suele bastar. Si hay duda, mejor no incluirlo o consultarlo con un asesor.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Varios propietarios: cada uno paga lo suyo</summary>
+        <div class="dc">
+          <p>Si la casa es de un matrimonio al 50 %, cada uno declara la mitad de la ganancia con su propia tabla. Como los tramos empiezan de cero para cada uno, pagan menos que si fuera de una sola persona.</p>
+          <p><b>Ejemplo:</b> ganancia de 100.000 € sin reinvertir. Un solo dueño: 21.880 €. Dos dueños al 50 %: 10.380 € cada uno, 20.760 € en total.</p>
+        </div>
+      </details>
+    </div>
+    <div>
+      <details>
+        <summary>Vivienda heredada o donada</summary>
+        <div class="dc">
+          <p>El valor de compra es el que se declaró en el Impuesto de Sucesiones o Donaciones, más los gastos de la herencia (notaría, registro, impuesto pagado). Por eso conviene declarar en la herencia un valor realista: si se declara bajo, al vender se paga más IRPF.</p>
+          <p>Si fue la vivienda habitual del heredero durante 3 años, también puede acogerse a la reinversión.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Comprada antes de 1995</summary>
+        <div class="dc">
+          <p>Se pueden aplicar los <b>coeficientes de abatimiento</b>: reducen la parte de la ganancia generada hasta el 19 de enero de 2006. Tienen un límite de 400.000 € de ventas acumuladas por persona desde 2015. El cálculo es largo: pídelo al gestor o usa el programa Renta Web, que lo hace solo.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Estuvo alquilada</summary>
+        <div class="dc">
+          <p>Las amortizaciones que se dedujeron (o que se podían deducir) en la renta mientras estuvo alquilada se restan del valor de compra. Eso aumenta la ganancia. No vale la reinversión salvo que después fuera la vivienda habitual 3 años.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Otras exenciones</summary>
+        <div class="dc">
+          <ul>
+            <li><b>Mayores de 65 que no reinvierten en vivienda:</b> si destinan hasta 240.000 € de la venta de cualquier bien a una renta vitalicia en 6 meses, esa parte también queda exenta.</li>
+            <li><b>Dación en pago o ejecución hipotecaria</b> de la vivienda habitual: exenta.</li>
+            <li><b>Pérdidas:</b> si vendes por menos de lo que te costó, la pérdida se puede compensar con otras ganancias del año y de los 4 siguientes.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>No confundir con la plusvalía municipal</summary>
+        <div class="dc">
+          <p>La plusvalía municipal la cobra el Ayuntamiento por el suelo y se paga siempre, aunque se reinvierta. El IRPF lo cobra Hacienda por la ganancia. Eso sí: la plusvalía municipal pagada se resta como gasto de venta en el IRPF.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="ck" aria-labelledby="ckT">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:70ch">
+    <div class="eyebrow">Antes de vender</div>
+    <h2 id="ckT">Los 6 puntos que se revisan antes de poner una casa a la venta</h2>
+    <p class="muted">Es el informe jurídico que se hace antes de publicar una vivienda. Si uno falla, se resuelve antes de firmar arras, no en la notaría.</p>
+  </div>
+  <div class="ck-grid">
+    <div class="ck-item"><span class="ck-n">1</span><div><h3>Propietarios</h3><p>Los que firman tienen que ser los mismos que salen en la nota simple, todos y con DNI. Si falta una herencia o un divorcio por resolver, se hace primero.</p><a href="guia-herencia.html">Guía de la Herencia →</a> </div></div>
+    <div class="ck-item"><span class="ck-n">2</span><div><h3>VPO</h3><p>Si es protegida: tipo, antigüedad, precio máximo y autorización de la Junta. Y si hay derecho de tanteo (de la Junta o, en Sevilla, de EMVISESA). A veces conviene pedir la descalificación.</p><a href="vpo.html">Guía de la VPO →</a></div></div>
+    <div class="ck-item"><span class="ck-n">3</span><div><h3>Cargas</h3><p>Hipotecas, embargos o condiciones resolutorias que salgan en la nota simple. Se cancelan antes o en la misma firma, con el dinero de la venta.</p></div></div>
+    <div class="ck-item"><span class="ck-n">4</span><div><h3>Superficie</h3><p>Que coincidan los metros del Catastro y de la nota simple, y que la casa esté declarada como es (sin plantas ni ampliaciones fuera del Registro).</p><a href="regularizar.html">Regularizar la Vivienda →</a></div></div>
+    <div class="ck-item"><span class="ck-n">5</span><div><h3>Fiscalidad</h3><p>Fecha y precio de compra, IRPF que pagará el vendedor (o si puede reinvertir) y plusvalía municipal.</p><span class="here">Lo explica esta web.</span></div></div>
+    <div class="ck-item"><span class="ck-n">6</span><div><h3>Situación familiar</h3><p>Divorcios, separaciones o viviendas en las que el otro tiene el uso: condicionan quién firma y qué impuestos hay.</p><a href="divorcio.html">Divorcio y Vivienda →</a></div></div>
+  </div>
+  <div class="ck-docs">
+    <div><h3>Papeles que se piden al vendedor</h3><ul>
+      <li>Escritura de la vivienda</li><li>DNI de todos los propietarios, con teléfono y correo</li><li>Último recibo del IBI</li><li>Último recibo de comunidad</li><li>Certificado energético (si no lo tiene, se encarga)</li><li>Antes de firmar: certificado de la comunidad de estar al corriente, estar al día del IBI y certificado de deuda del banco si hay hipoteca</li>
+    </ul></div>
+    <div><h3>En la firma y después</h3><ul>
+      <li>Antes de la notaría se entrega a cada parte la liquidación: lo que cobra o paga cada uno</li><li>El IBI del año se reparte entre vendedor y comprador en la propia notaría, para no reclamarlo después</li><li>Las cargas se cancelan con el dinero de la venta</li><li>Después: plusvalía municipal, cambio de luz, agua, comunidad y vado, y entrega de llaves</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Guía orientativa</b> basada en la Ley 35/2006 del IRPF (arts. 33, 35, 38 y 46), el art. 41 de su Reglamento y la escala del ahorro vigente en 2026. No incluye coeficientes de abatimiento ni otras rentas del vendedor. Para la declaración, revisa tu caso con un asesor o con Renta Web.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const fmt=n=>(n<0?'−':'')+String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €';
+  const pc=n=>(Math.round(n*1000)/10).toString().replace('.',',')+' %';
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const IDS=['tipo','mayor65','venta','gVenta','hip','origen','compra','gCompra','mejoras','anio','amort','rein','nueva','nProp','pct'];
+  const BASE={tipo:'hab',mayor65:false,gVenta:0,hip:0,origen:'compra',gCompra:0,mejoras:0,anio:'',amort:0,rein:'si',nueva:0,nProp:'1',pct:50};
+  const EX={
+    total:{venta:200000,hip:120000,compra:100000,nueva:80000,rein:'si'},
+    parcial:{venta:200000,hip:0,compra:100000,nueva:175000,rein:'si'},
+    parcialHip:{venta:200000,hip:40000,compra:140000,nueva:120000,rein:'si'},
+    no:{venta:200000,hip:0,compra:100000,rein:'no',nueva:0}
+  };
+  const TR=[[6000,.19],[50000,.21],[200000,.23],[300000,.27],[Infinity,.30]];
+  function tabla(b){ const rows=[]; let prev=0, tot=0; for(const [lim,t] of TR){ if(b<=prev) break; const part=Math.min(b,lim)-prev; rows.push([prev,lim,t,part,part*t]); tot+=part*t; prev=lim; } return {tot,rows}; }
+
+  function load(d){ for(const k in d){ const e=$(k); if(!e) continue; if(e.type==='checkbox') e.checked=!!d[k]; else e.value=d[k]; } }
+  function read(){ const o={}; IDS.forEach(k=>{ const e=$(k); o[k]=e.type==='checkbox'?e.checked:(e.type==='number'?(e.value===''?0:Math.max(0,parseFloat(e.value))):e.value); }); return o; }
+
+  function render(){
+    const s=read();
+    const hab=s.tipo==='hab';
+    $('w65').hidden=!hab; $('wRein').hidden=!hab||s.mayor65; $('wHip').hidden=!hab||s.mayor65||s.rein==='no';
+    $('wNueva').hidden=s.rein!=='si'; $('wAmort').hidden=hab; $('wPct').hidden=s.nProp==='1';
+    const her=s.origen==='herencia';
+    $('lCompra').textContent=her?'Valor declarado en la herencia':'Precio de compra';
+    $('lGCompra').textContent=her?'Gastos de la herencia':'Gastos de compra';
+    $('hCompra').textContent=her?'Notaría, registro e impuesto de sucesiones o donaciones pagado.':'Notaría, registro, ITP o IVA, gestoría, agencia. Si no los tienes, en Andalucía suelen ser un 8–10 % del precio en segunda mano.';
+
+    const vt = s.venta - s.gVenta;                       // valor de transmisión
+    const va = s.compra + s.gCompra + s.mejoras - (hab?0:s.amort); // valor de adquisición
+    const G = vt - va;
+    const steps=[], alerts=[];
+    steps.push(['Valor de venta', s.gVenta?fmt(s.venta)+' − '+fmt(s.gVenta)+' de gastos':'', vt]);
+    steps.push(['Valor de compra', (s.gCompra||s.mejoras||(!hab&&s.amort))?'':'', va]); steps.pop(); steps.push(['Valor de compra', !(s.gCompra||s.mejoras||(!hab&&s.amort))?'':[fmt(s.compra), s.gCompra?'+ '+fmt(s.gCompra)+' gastos':'', s.mejoras?'+ '+fmt(s.mejoras)+' mejoras':'', (!hab&&s.amort)?'− '+fmt(s.amort)+' amortizaciones':''].filter(Boolean).join(' '), va]);
+    steps.push(['Ganancia', fmt(vt)+' − '+fmt(va), G, true]);
+
+    let exPct=0, gTrib=Math.max(G,0), reqRein=0, motivo='';
+    if(G<=0){ motivo='perdida'; gTrib=0; }
+    else if(hab && s.mayor65){ motivo='65'; exPct=1; gTrib=0; }
+    else if(hab && s.rein==='si'){
+      reqRein = Math.max(vt - s.hip, 0);
+      steps.push(['Lo que hay que reinvertir', s.hip?fmt(vt)+' − '+fmt(s.hip)+' de hipoteca':'Todo el valor de venta', reqRein]);
+      exPct = reqRein>0 ? Math.min(1, s.nueva/reqRein) : 1;
+      steps.push(['Parte exenta', fmt(s.nueva)+' / '+fmt(reqRein), null, false, pc(exPct)]);
+      gTrib = G*(1-exPct);
+      if(exPct<1) steps.push(['Ganancia que tributa', fmt(G)+' × '+pc(1-exPct), gTrib, true]);
+      motivo = exPct>=1?'total':'parcial';
+    } else motivo='sin';
+
+    // por propietario
+    const n=parseInt(s.nProp,10);
+    const shares = n===1?[1]: [s.pct/100, ...Array(n-1).fill((1-s.pct/100)/(n-1))];
+    const props = shares.map((sh,i)=>{ const b=gTrib*sh; const t=tabla(b); return {i,sh,b,t}; });
+    const total = props.reduce((a,p)=>a+p.t.tot,0);
+    window.__irpf={total, venta:s.venta, gVenta:s.gVenta, hip:s.hip, nueva:s.nueva};
+    const sinRein = shares.reduce((a,sh)=>a+tabla(Math.max(G,0)*sh).tot,0);
+
+    if(motivo==='perdida') alerts.push(['ok','No hay ganancia: no se paga IRPF','Hay una pérdida de '+fmt(-G)+'. Se declara igual y se puede compensar con otras ganancias del año o de los 4 siguientes.']);
+    if(motivo==='65') alerts.push(['ok','Exento por tener 65 años o más','La venta de la vivienda habitual a partir de 65 años no paga IRPF, se reinvierta o no. Si es de dos personas y solo una tiene 65, la exención es solo para su parte.']);
+    if(motivo==='total') alerts.push(['ok','Reinversión total: no pagas nada','La nueva vivienda ('+fmt(s.nueva)+') cubre todo lo que había que reinvertir ('+fmt(reqRein)+').']);
+    if(motivo==='parcial'){
+      alerts.push(['warn','Para no pagar nada, la nueva vivienda debería costar '+fmt(reqRein),'Te faltan '+fmt(reqRein-s.nueva)+'. Con esta compra ahorras '+fmt(sinRein-total)+' frente a no reinvertir.']);
+      if(s.hip) alerts.push(['','No hace falta reinvertir el precio de venta entero','Como se cancela una hipoteca de '+fmt(s.hip)+', basta con reinvertir '+fmt(reqRein)+', no '+fmt(vt)+'.']);
+    }
+    if(motivo==='sin' && G>0) alerts.push([hab?'warn':'', hab?'Sin reinversión, toda la ganancia tributa':'No es vivienda habitual: no hay exención por reinversión', hab?'Si compras otra vivienda habitual en 2 años por al menos '+fmt(Math.max(vt-s.hip,0))+', no pagarías nada.':'La ganancia entera va a la tabla del ahorro.'+(s.amort?' Las amortizaciones aumentan la ganancia.':'')]);
+    if(s.anio && s.anio<1995 && G>0) alerts.push(['','Comprada antes de 1995: puede pagar menos','Se aplican los coeficientes de abatimiento, que esta calculadora no incluye. El resultado real será menor.']);
+    if(n>1 && gTrib>0 && n>1) alerts.push(['','Cada propietario paga con su propia tabla','Entre '+n+' propietarios pagan '+fmt(total)+'. Si fuera de una sola persona serían '+fmt(tabla(gTrib).tot)+'.']);
+    if(!hab && s.mayor65) {}
+    if(s.gVenta===0 && s.gCompra===0 && G>0) alerts.push(['','Añade los gastos de compra y de venta','Bajan la ganancia. Por ejemplo, agencia, notaría, ITP y plusvalía municipal.']);
+
+    const bar = G>0 ? `<div class="bar" role="img" aria-label="${pc(exPct)} exento"><i style="width:${(exPct*100).toFixed(1)}%"></i></div><div class="barl"><span>Exento ${pc(exPct)}</span><span>Tributa ${pc(1-exPct)}</span></div>`:'';
+
+    $('out').innerHTML=`
+      <div class="card">
+        <div class="eyebrow">Resultado</div>
+        <div class="big">
+          <div><b class="num pay">${fmt(total)}</b><span>IRPF a pagar${n>1?' entre todos':''}</span></div>
+          <div><b class="num">${fmt(Math.max(G,0))}</b><span>ganancia</span></div>
+          ${(motivo==='parcial'||motivo==='total')?`<div><b class="num">${fmt(sinRein-total)}</b><span>ahorro por reinvertir</span></div>`:''}
+        </div>
+        ${bar}
+      </div>
+      ${alerts.length?`<div class="alerts">${alerts.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join('')}</div>`:''}
+      <div class="card">
+        <div class="eyebrow">El cálculo, paso a paso</div>
+        <ol class="steps">${steps.map(x=>`<li class="${x[3]?'hl':''}"><span class="t">${esc(x[0])}${x[1]?`<small>${esc(x[1])}</small>`:''}</span><span class="v">${x[4]?esc(x[4]):fmt(x[2])}</span></li>`).join('')}</ol>
+      </div>
+      ${gTrib>0?`<div class="card">
+        <div class="eyebrow">La tabla${n>1?', por propietario':''}</div>
+        ${props.map(p=>`${n>1?`<h3>Propietario ${p.i+1} · ${pc(p.sh)} · tributa ${fmt(p.b)}</h3>`:''}
+        <div class="tbl"><table class="tr"><thead><tr><th>Tramo</th><th class="r">Base</th><th class="r">Tipo</th><th class="r">Cuota</th></tr></thead><tbody>
+        ${p.t.rows.map(r=>`<tr><td>${fmt(r[0])} – ${r[1]===Infinity?'en adelante':fmt(r[1])}</td><td class="r">${fmt(r[3])}</td><td class="r">${Math.round(r[2]*100)} %</td><td class="r">${fmt(r[4])}</td></tr>`).join('')}
+        <tr class="sub"><td>Total</td><td class="r">${fmt(p.b)}</td><td></td><td class="r">${fmt(p.t.tot)}</td></tr></tbody></table></div>`).join('')}
+      </div>`:''}`;
+
+    document.querySelectorAll('.leaf').forEach(l=>{ const e=EX[l.dataset.ex]; const m=Object.keys(e).every(k=>String(s[k])===String(e[k])) && s.gVenta===0 && s.gCompra===0 && s.mejoras===0 && s.tipo==='hab' && !s.mayor65 && s.nProp==='1'; l.classList.toggle('on',m); });
+  }
+
+  function save(){ try{ localStorage.setItem('reinversion-caso', JSON.stringify(read())); }catch(e){} }
+  document.querySelectorAll('.leaf').forEach(l=>l.addEventListener('click',()=>{ load(Object.assign({},BASE,EX[l.dataset.ex])); render(); save(); try{ $('f').scrollIntoView({behavior: (window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)?'auto':'smooth', block:'start'}); }catch(e){} }));
+  $('f').addEventListener('input',()=>{render();save();});
+  $('f').addEventListener('change',()=>{render();save();});
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('reinversion-caso')||'null'); }catch(e){}
+  load(Object.assign({},BASE,EX.parcialHip,saved||{}));
+  render();
+
+  // ===== Vender para comprar =====
+  const VIDS=['vVenta','vGV','vHip','vIrpf','vCompra','vTipo','vEsp','vNot','vAho','vTin','vAnos'];
+  const VEX={vVenta:200000,vGV:7500,vHip:40000,vIrpf:3030,vCompra:240000,vTipo:'usada',vEsp:false,vNot:1800,vAho:0,vTin:2.9,vAnos:30};
+  const vread=()=>{ const o={}; VIDS.forEach(k=>{ const e=$(k); o[k]=e.type==='checkbox'?e.checked:(e.type==='number'?(e.value===''?0:Math.max(0,parseFloat(e.value))):e.value); }); return o; };
+  const vload=d=>{ for(const k in d){ const e=$(k); if(!e) continue; if(e.type==='checkbox') e.checked=!!d[k]; else e.value=d[k]; } };
+  function vrender(){
+    const v=vread();
+    const neto = v.vVenta - v.vGV - v.vHip - v.vIrpf;
+    let impTxt, imp;
+    if(v.vTipo==='usada'){
+      let t=0.07, why='ITP general 7 %';
+      if(v.vEsp && v.vCompra<=150000){ t=0.035; why='ITP reducido 3,5 % (hasta 150.000 €)'; }
+      else if(v.vCompra<=150000){ t=0.06; why='ITP 6 % vivienda habitual (hasta 150.000 €)'; }
+      imp=v.vCompra*t; impTxt=why;
+    } else {
+      const iva = v.vTipo==='vpo'?0.04:0.10;
+      const ajd = (v.vEsp && v.vCompra<=150000)?0.003:0.012;
+      imp=v.vCompra*(iva+ajd); impTxt='IVA '+(iva*100)+' % + AJD '+String(ajd*100).replace('.',',')+' %';
+    }
+    const costeCompra = v.vCompra + imp + v.vNot;
+    const disponible = Math.max(neto,0) + v.vAho;
+    const hipNec = Math.max(costeCompra - disponible, 0);
+    const pct = v.vCompra>0 ? hipNec/v.vCompra : 0;
+    const r = v.vTin/100/12, n=v.vAnos*12;
+    const cuota = hipNec>0 ? (r>0 ? hipNec*r/(1-Math.pow(1+r,-n)) : hipNec/n) : 0;
+    const sobra = disponible - costeCompra;
+    let cls, verdict, msg;
+    if(neto<0){ cls='warn'; verdict='La venta no cubre la hipoteca'; msg='Al vender te faltan '+fmt(-neto)+' para cancelar la hipoteca y pagar gastos e IRPF.'; }
+    else if(hipNec===0){ cls='ok'; verdict='Te salen las cuentas sin hipoteca'; msg='Te sobran '+fmt(sobra)+' después de comprar.'; }
+    else if(pct<=0.80){ cls='ok'; verdict='Te salen las cuentas'; msg='Necesitas una hipoteca del '+Math.round(pct*100)+' % del precio. Los bancos suelen financiar hasta el 80 %.'; }
+    else { cls='warn'; verdict='Justo: hipoteca por encima del 80 %'; msg='Necesitas el '+Math.round(pct*100)+' % del precio. Por encima del 80 % cuesta conseguirla; los menores de 40 años en Andalucía pueden usar el aval de la Junta hasta el 100 %.'; }
+    const rows=[
+      ['Precio de venta',v.vVenta,''],['− Gastos de venta',-v.vGV,''],['− Hipoteca pendiente',-v.vHip,''],['− IRPF de la venta',-v.vIrpf,'Se paga en la renta del año siguiente: guárdalo.'],
+      ['= Te queda de la venta',neto,'t'],['+ Ahorros',v.vAho,''],['= Dinero disponible',disponible,'t'],
+      ['Precio de la nueva',v.vCompra,''],['+ Impuestos ('+impTxt+')',imp,''],['+ Notaría, registro y gestoría',v.vNot,''],['= Coste total de la compra',costeCompra,'t']
+    ];
+    $('vOut').innerHTML=`
+      <div class="card">
+        <div class="eyebrow">Resultado</div>
+        <div class="big">
+          <div><b class="num ${cls==='ok'?'':'pay'}">${esc(verdict)}</b><span>${esc(msg)}</span></div>
+        </div>
+        <div class="big">
+          <div><b class="num">${fmt(hipNec)}</b><span>hipoteca necesaria</span></div>
+          <div><b class="num">${fmt(cuota)}</b><span>cuota al mes (${String(v.vTin).replace('.',',')} %, ${v.vAnos} años)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Los números</div>
+        <ol class="steps">${rows.map(x=>`<li class="${x[2]==='t'?'hl':''}"><span class="t">${esc(x[0])}${x[2]&&x[2]!=='t'?`<small>${esc(x[2])}</small>`:''}</span><span class="v">${fmt(x[1])}</span></li>`).join('')}</ol>
+      </div>
+      <div class="alerts">
+        <div class="alert"><b>Si tiene que vender para comprar</b>Lo más seguro es vender primero: unas arras largas (5–6 meses) para que le dé tiempo a buscar, y si hace falta un alquiler o precario de unas semanas en su propia casa tras la venta. Si compra antes, que no dependa de una venta que no está controlada.</div>
+        ${v.vIrpf===0 && v.vVenta>0?'<div class="alert warn"><b>¿Has calculado el IRPF?</b>Pulsa "Traer datos de la calculadora de arriba" o pon lo que saldrá en la renta. Si reinvierte en la nueva vivienda, puede ser 0 €.</div>':''}
+      </div>`;
+    try{ localStorage.setItem('reinversion-vpc', JSON.stringify(v)); }catch(e){}
+  }
+  $('vTraer').addEventListener('click',()=>{ const d=window.__irpf; if(!d) return; vload({vVenta:d.venta, vGV:d.gVenta, vHip:d.hip, vIrpf:Math.round(d.total), vCompra:d.nueva||$('vCompra').value}); vrender(); });
+  $('fv').addEventListener('input',vrender); $('fv').addEventListener('change',vrender);
+  let vsaved=null; try{ vsaved=JSON.parse(localStorage.getItem('reinversion-vpc')||'null'); }catch(e){}
+  vload(Object.assign({},VEX,vsaved||{}));
+  vrender();
+})();
+</script>
+
+<script>if(window.top!==window.self){var b=document.querySelector(".backbar");if(b)b.remove();}</script>
+</body>
+</html>

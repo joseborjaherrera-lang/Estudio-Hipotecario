@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#082d74">
+<title>Guía de la Herencia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: cabecera + "lo básico" (fichas de conceptos) + configurador (formulario fijo a la izquierda, resultado a la derecha) + biblioteca de casos en desplegables */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --ink:#15201E; --muted:#56635F; --line:#D6DDDA;
+  --accent:#1C5A53; --accent-soft:#E0ECE9;
+  --t1:#1C5A53; --t2:#5E8F88; --t3:#B9D3CE;
+  --warn:#8A5300; --warn-soft:#FBEFD8; --bad:#9E2F2A; --bad-soft:#F8E2DF; --ok:#2B663B; --ok-soft:#E1EFE4;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1514; --surface:#162020; --ink:#E5ECEA; --muted:#9BA9A5; --line:#2A3634;
+  --accent:#73C4B7; --accent-soft:#1B3330; --t1:#73C4B7; --t2:#4A8A80; --t3:#2C4D48;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1514; --surface:#162020; --ink:#E5ECEA; --muted:#9BA9A5; --line:#2A3634;
+  --accent:#73C4B7; --accent-soft:#1B3330; --t1:#73C4B7; --t2:#4A8A80; --t3:#2C4D48;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.1rem,5vw,3.3rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.55rem,3vw,2rem)}
+h3{font-size:1.2rem}
+p{margin:0}
+a{color:var(--accent)}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.num{font-variant-numeric:tabular-nums}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+
+header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;align-items:end;border-bottom:1px solid var(--line);padding-bottom:32px}
+header .lead{font-size:1.12rem;max-width:58ch;margin-top:14px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.fact{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.fact b{font-family:var(--display);font-size:1.5rem;font-weight:600;line-height:1.1}
+.fact span{font-size:.84rem;color:var(--muted);line-height:1.35}
+
+/* Lo básico */
+.basics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.bcard h3{font-size:1.25rem}
+.bcard .who{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.bcard p{font-size:.94rem}
+.ex{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:.87rem;line-height:1.45}
+.ex b{font-weight:600}
+.bcard.wide{grid-column:span 3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.bcard.wide > div{display:flex;flex-direction:column;gap:10px;min-width:0}
+.thirds{display:flex;height:42px;border-radius:8px;overflow:hidden;font-size:.78rem;font-weight:600}
+.thirds div{flex:1;display:grid;place-items:center;text-align:center;padding:0 4px;line-height:1.15}
+.thirds .a{background:var(--t1);color:var(--surface)}
+.thirds .b{background:var(--t2);color:var(--surface)}
+.thirds .c{background:var(--t3);color:var(--ink)}
+.legend{display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.legend span{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+
+/* Configurador */
+.tool{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:28px;align-items:start}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:18px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}
+.form h2{font-size:1.4rem}
+.badge-ex{align-self:flex-start;font-size:.75rem;font-weight:600;background:var(--warn-soft);color:var(--warn);padding:3px 9px;border-radius:99px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.88rem;font-weight:600}
+.help{font-size:.78rem;color:var(--muted);line-height:1.35}
+select,input[type=number],input[type=date]{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+select:focus-visible,input:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.checks{display:flex;flex-direction:column;gap:8px}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;line-height:1.35}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.grp{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:14px}
+.grp-t{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+button.reset{font:inherit;font-size:.85rem;font-weight:600;background:none;border:1px solid var(--line);color:var(--ink);padding:8px 12px;border-radius:8px;cursor:pointer}
+button.reset:hover{border-color:var(--accent);color:var(--accent)}
+
+.out{display:flex;flex-direction:column;gap:26px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:.82rem;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.big{display:flex;flex-wrap:wrap;gap:28px}
+.big div{display:flex;flex-direction:column}
+.big b{font-family:var(--display);font-size:2rem;font-weight:600;line-height:1.1}
+.big span{font-size:.82rem;color:var(--muted)}
+.alert{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 8px 8px 0;font-size:.92rem}
+.alert.warn{border-color:var(--warn);background:var(--warn-soft)}
+.alert.bad{border-color:var(--bad);background:var(--bad-soft)}
+.alert.ok{border-color:var(--ok);background:var(--ok-soft)}
+.alert b{display:block;margin-bottom:2px}
+.alerts{display:flex;flex-direction:column;gap:10px}
+
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+td.r,th.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.n{color:var(--muted);font-variant-numeric:tabular-nums;width:2em}
+tr.sub td{font-weight:700;border-top:2px solid var(--ink)}
+tr.opt td{color:var(--muted)}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.tag.opt{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+td .note{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+
+ol.route{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;counter-reset:paso}
+ol.route li{counter-increment:paso;display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+ol.route li:last-child{border-bottom:none}
+ol.route li::before{content:counter(paso);font-family:var(--display);font-size:1.25rem;font-weight:600;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center}
+ol.route h3{font-size:1.1rem;margin-bottom:4px}
+ol.route p{font-size:.93rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:.8rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+
+.lib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 36px}
+.group{display:flex;flex-direction:column;gap:10px}
+.group > h3{font-family:var(--body);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-size:.78rem}
+details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details[open]{border-color:var(--accent)}
+summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:600;position:relative;line-height:1.35}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.dc{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:.94rem}
+.dc ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.88rem;background:var(--bg);padding:10px 12px;border-radius:8px;margin:0}
+.kv dt{font-weight:600;color:var(--muted)}
+.kv dd{margin:0}
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;max-width:80ch}
+
+@media (max-width:980px){ .basics{grid-template-columns:1fr 1fr} .bcard.wide{grid-column:span 2} }
+@media (max-width:900px){
+  header{grid-template-columns:1fr;gap:24px}
+  .tool{grid-template-columns:1fr}
+  .form{position:static;max-height:none}
+  .lib{grid-template-columns:1fr}
+}
+@media (max-width:640px){ .basics{grid-template-columns:1fr} .bcard.wide{grid-column:auto;grid-template-columns:1fr} }
+@media (max-width:420px){ .row2{grid-template-columns:1fr} .facts{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.ck{display:flex;flex-direction:column;gap:18px}
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ck-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;min-width:0}
+.ck-n{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.ck-item h3{font-size:1.02rem;margin:0 0 3px}
+.ck-item p{font-size:.88rem;margin:0}
+.ck-item a{font-size:.84rem;font-weight:600}
+.ck-item .here{font-size:.8rem;color:var(--muted)}
+.ck-docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.ck-docs ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+@media (max-width:900px){ .ck-grid{grid-template-columns:1fr} .ck-docs{grid-template-columns:1fr} }
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>.backbar{display:flex;margin-bottom:-28px}.backbar a{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;font-weight:700;color:#082d74;text-decoration:none;background:#fff;border:1px solid #e0e3f0;border-radius:999px;padding:7px 14px;box-shadow:0 1px 2px rgba(16,19,42,.05)}.backbar a:hover{border-color:#b9c2de}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .backbar a{background:#1b2030;color:#cfd8f5;border-color:#2c3348}}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="backbar"><a href="index.html">‹ Herramientas</a></div>
+
+<header>
+  <div>
+    <div class="eyebrow">Sevilla · Andalucía · octubre 2026</div>
+    <h1>Cómo se hace una herencia, paso a paso</h1>
+    <p class="lead">Para quien no ha hecho nunca una. Primero, lo básico explicado en sencillo. Después rellenas tu caso y te sale quién hereda, qué hay que hacer en orden, qué hay que pagar y cuánto, con precios de Sevilla.</p>
+  </div>
+  <div class="facts">
+    <div class="fact"><b>6 meses</b><span>desde el fallecimiento para presentar los dos impuestos</span></div>
+    <div class="fact"><b>0 €</b><span>de Impuesto de Sucesiones para hijos, nietos, cónyuge y padres (hasta 1 M € cada uno)</span></div>
+    <div class="fact"><b>26,53 %</b><span>tipo de la plusvalía municipal en Sevilla capital</span></div>
+    <div class="fact"><b>≈ 1.050–1.400 €</b><span>notaría, registro y papeles de una herencia con un piso de 180.000 € y 2 hijos, sin contar la plusvalía</span></div>
+  </div>
+</header>
+
+<!-- LO BÁSICO -->
+<section style="display:flex;flex-direction:column;gap:24px" aria-labelledby="tBasico">
+  <div class="sec-head">
+    <div class="eyebrow">Lo básico en 2 minutos</div>
+    <h2 id="tBasico">Las palabras que vas a oír</h2>
+  </div>
+  <div class="basics">
+    <article class="bcard">
+      <div class="who">Lo cobra la Junta de Andalucía</div>
+      <h3>Impuesto de Sucesiones</h3>
+      <p>Es el impuesto por <b>recibir</b> una herencia. Lo paga cada heredero por lo que le toca a él, no la herencia entera.</p>
+      <p>En Andalucía, hijos, nietos, cónyuge y padres no pagan nada hasta 1 millón de euros cada uno. Hermanos, sobrinos y el resto sí pagan.</p>
+      <div class="ex"><b>Ejemplo:</b> dos hijos heredan 90.000 € cada uno → 0 €. Un sobrino hereda 90.000 € → unos 9.000–14.000 €.</div>
+    </article>
+    <article class="bcard">
+      <div class="who">Lo cobra el Ayuntamiento</div>
+      <h3>Plusvalía municipal</h3>
+      <p>Es un impuesto por cada casa, local o terreno que <b>cambia de dueño</b>, también al heredar. Se paga aunque no vendáis. Grava lo que se ha revalorizado el suelo durante los años que lo tuvo el fallecido.</p>
+      <p>En Sevilla: valor catastral del suelo (está en el recibo del IBI) × un coeficiente según los años × 26,53 %. Hijos y cónyuge tienen rebaja si era la vivienda habitual.</p>
+      <div class="ex"><b>Ejemplo:</b> suelo 18.000 €, la tuvo 20 años → 18.000 × 0,40 × 26,53 % = <b>1.910 €</b>. Con la rebaja del 50 % para hijos → <b>955 €</b>.</div>
+    </article>
+    <article class="bcard">
+      <div class="who">Cuando ha pasado mucho tiempo</div>
+      <h3>¿Qué significa "prescrito"?</h3>
+      <p>Hacienda y el Ayuntamiento tienen un tiempo máximo para cobrar un impuesto. Si pasa ese tiempo sin que hagan nada, <b>ya no lo pueden cobrar</b>: está prescrito.</p>
+      <p>Para las herencias, ese tiempo es 4 años contados desde que acabó el plazo de 6 meses. Es decir, <b>4 años y medio desde el fallecimiento</b>.</p>
+      <div class="ex"><b>Ojo:</b> aunque esté prescrito, hay que presentar los papeles diciendo que lo está. Sin ese sello, el Registro no pone la casa a vuestro nombre.</div>
+    </article>
+    <article class="bcard">
+      <div class="who">Un impreso por herencia</div>
+      <h3>Modelo 660</h3>
+      <p>Es el <b>inventario</b> de lo que dejó el fallecido: casas, cuentas, coches, seguros y deudas, con su valor. Se presenta uno por cada fallecido.</p>
+      <div class="ex">Se presenta junto con los 650 en la Agencia Tributaria de Andalucía, por internet o en su oficina de Sevilla.</div>
+    </article>
+    <article class="bcard">
+      <div class="who">Un impreso por heredero</div>
+      <h3>Modelo 650</h3>
+      <p>Es la <b>declaración de cada heredero</b>: qué recibe él y cuánto impuesto le sale. Cada heredero presenta el suyo, aunque salga 0 €.</p>
+      <div class="ex"><b>Ejemplo:</b> 3 hijos heredan de su madre → un 660 y tres 650.</div>
+    </article>
+    <article class="bcard">
+      <div class="who">El papel que dice quién hereda</div>
+      <h3>Testamento o declaración de herederos</h3>
+      <p>Si hay testamento, él dice quién hereda. Si no lo hay, un notario hace una <b>declaración de herederos</b> según el orden de la ley: hijos, padres, cónyuge, hermanos...</p>
+      <div class="ex">Para saber si había testamento se pide el <b>certificado de últimas voluntades</b> (3,86 €).</div>
+    </article>
+    <article class="bcard wide">
+      <div>
+        <div class="who">Testamento con hijos</div>
+        <h3>¿Puede una hija quedarse más que sus hermanos?</h3>
+        <p><b>Sí.</b> La herencia se divide en tres tercios:</p>
+        <div class="thirds" role="img" aria-label="Tres tercios: legítima, mejora y libre disposición">
+          <div class="a">Legítima<br>a partes iguales</div><div class="b">Mejora<br>a uno o varios hijos</div><div class="c">Libre<br>a quien quiera</div>
+        </div>
+        <div class="legend">
+          <div><span style="background:var(--t1)"></span><b>Legítima:</b> obligatoria, a partes iguales entre todos los hijos.</div>
+          <div><span style="background:var(--t2)"></span><b>Mejora:</b> se puede dar a uno o varios hijos o nietos.</div>
+          <div><span style="background:var(--t3)"></span><b>Libre:</b> a quien quiera, incluso a alguien de fuera de la familia.</div>
+        </div>
+        <div class="ex"><b>Ejemplo con 3 hijos y 300.000 €:</b> cada hijo tiene asegurados 33.333 € (un tercio de la legítima). Si a una hija le dejan la mejora y el tercio libre, ella puede recibir 233.333 €.</div>
+      </div>
+      <div>
+        <div class="who">Testamento con hijos</div>
+        <h3>¿Y se puede dejar a un hijo sin nada?</h3>
+        <p><b>Solo desheredándolo con una causa de la ley</b> y escrita en el testamento: haber maltratado o insultado gravemente al padre o la madre, o haberle negado ayuda cuando la necesitó. Los tribunales también aceptan el <b>abandono total</b> y el maltrato psicológico.</p>
+        <p>Si el hijo niega la causa, son los demás herederos los que tienen que probarla. Si no se prueba, el hijo recibe al menos su parte de la legítima.</p>
+        <p>Aunque se le deshereda bien, <b>sus hijos</b> (los nietos) ocupan su lugar en la legítima.</p>
+        <div class="ex">Sin testamento no se puede quitar a nadie: la ley reparte a partes iguales.</div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- CONFIGURADOR -->
+<section style="display:flex;flex-direction:column;gap:24px" aria-labelledby="tCaso">
+  <div class="sec-head">
+    <div class="eyebrow">Tu caso</div>
+    <h2 id="tCaso">Rellena los datos y mira qué te toca hacer</h2>
+  </div>
+  <div class="tool">
+  <form class="form" id="f" onsubmit="return false">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2>Datos</h2>
+      <button type="button" class="reset" id="btnReset">Cargar ejemplo</button>
+    </div>
+    <span class="badge-ex" id="exBadge">Ejemplo: cambia los datos por los tuyos</span>
+
+    <div class="field">
+      <label for="fecha">¿Cuándo falleció?</label>
+      <input type="date" id="fecha">
+      <span class="help">La fecha decide los plazos y si los impuestos ya han prescrito.</span>
+    </div>
+    <div class="field">
+      <label for="test">¿Dejó testamento?</label>
+      <select id="test">
+        <option value="si">Sí</option>
+        <option value="no">No</option>
+        <option value="nose">No lo sé</option>
+      </select>
+    </div>
+
+    <div class="grp">
+      <div class="grp-t">Familia</div>
+      <div class="field">
+        <label for="estado">Situación al fallecer</label>
+        <select id="estado">
+          <option value="gananciales">Casado/a en gananciales</option>
+          <option value="separacion">Casado/a en separación de bienes</option>
+          <option value="pareja">Pareja de hecho</option>
+          <option value="viudo">Viudo/a</option>
+          <option value="soltero">Soltero/a o divorciado/a</option>
+        </select>
+        <span class="help">En Andalucía, si no firmasteis capitulaciones, es gananciales.</span>
+      </div>
+      <div class="field" id="wViudo">
+        <label for="viudoMuerto">¿El cónyuge que quedó vivo ha fallecido también?</label>
+        <select id="viudoMuerto">
+          <option value="no">No, vive</option>
+          <option value="si">Sí, falleció después</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="hijos">Número de hijos (cuenta también los fallecidos)</label>
+        <input type="number" id="hijos" min="0" max="15" step="1" inputmode="numeric">
+      </div>
+      <div class="field" id="wHijoFall">
+        <label for="hijoFall">¿Ha fallecido alguno de los hijos?</label>
+        <select id="hijoFall">
+          <option value="no">No</option>
+          <option value="antes">Sí, murió ANTES que su padre/madre</option>
+          <option value="despues">Sí, murió DESPUÉS que su padre/madre</option>
+        </select>
+      </div>
+      <div class="field" id="wNietos">
+        <label for="nietos">¿Cuántos hijos dejó ese hijo fallecido?</label>
+        <input type="number" id="nietos" min="0" max="15" step="1" inputmode="numeric">
+      </div>
+      <div class="field" id="wOtros">
+        <label for="otros">Sin hijos: ¿quién queda?</label>
+        <select id="otros">
+          <option value="padres">Viven el padre o la madre</option>
+          <option value="conyuge">Solo el cónyuge</option>
+          <option value="hermanos">Hermanos o sobrinos</option>
+          <option value="lejanos">Primos u otros parientes</option>
+        </select>
+      </div>
+      <div class="field" id="wNher">
+        <label for="nher">¿Cuántos herederos son?</label>
+        <input type="number" id="nher" min="1" max="30" step="1" inputmode="numeric">
+        <span class="help">Cada hermano vivo y cada sobrino que entra por un hermano fallecido.</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-t">Qué hay en la herencia</div>
+      <div class="row2">
+        <div class="field">
+          <label for="valor">Valor total aprox. (€)</label>
+          <input type="number" id="valor" min="0" step="1000" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="inm">Nº de inmuebles</label>
+          <input type="number" id="inm" min="0" max="30" step="1" inputmode="numeric">
+        </div>
+      </div>
+      <div id="wPlus" style="display:flex;flex-direction:column;gap:12px">
+        <div class="row2">
+          <div class="field">
+            <label for="vcs">Valor catastral del suelo (€)</label>
+            <input type="number" id="vcs" min="0" step="500" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="anios">Años que la tuvo</label>
+            <input type="number" id="anios" min="0" max="80" step="1" inputmode="numeric">
+          </div>
+        </div>
+        <span class="help">El valor del suelo viene en el recibo del IBI. Si hay varios inmuebles, suma el de todos. Los años son desde que el fallecido la compró o heredó hasta su muerte.</span>
+        <label class="check"><input type="checkbox" id="vh"> Era su vivienda habitual (empadronado al menos 2 años)</label>
+        <label class="check"><input type="checkbox" id="sevilla"> Está en Sevilla capital</label>
+      </div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="deudas"> Hay deudas o hipoteca pendiente</label>
+        <label class="check"><input type="checkbox" id="seguro"> Puede haber seguro de vida o plan de pensiones</label>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-t">Papeles que os faltan</div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="fDef"> El certificado de defunción (murió hace años, o fuera de España)</label>
+        <label class="check"><input type="checkbox" id="fUV"> No nos dan el de últimas voluntades o no sabemos pedirlo</label>
+        <label class="check"><input type="checkbox" id="fTest"> El certificado dice que hay testamento, pero no lo encontramos</label>
+        <label class="check"><input type="checkbox" id="fLib"> El libro de familia</label>
+        <label class="check"><input type="checkbox" id="fEsc"> La escritura de la casa</label>
+        <label class="check"><input type="checkbox" id="fBan"> No sabemos qué bancos o cuentas tenía</label>
+        <label class="check"><input type="checkbox" id="fPrev"> La casa sigue a nombre de los abuelos (otra herencia sin hacer)</label>
+        <label class="check"><input type="checkbox" id="fNoIns"> La casa no está inscrita en el Registro</label>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-t">Los herederos</div>
+      <div class="field">
+        <label for="acuerdo">¿Estáis todos de acuerdo en el reparto?</label>
+        <select id="acuerdo">
+          <option value="si">Sí</option>
+          <option value="no">No, hay desacuerdo</option>
+          <option value="ausente">Alguien no aparece o no contesta</option>
+        </select>
+      </div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="menores"> Hay algún heredero menor de edad o con discapacidad</label>
+        <label class="check"><input type="checkbox" id="extranjero"> Algún heredero vive fuera de España</label>
+        <label class="check"><input type="checkbox" id="gestoria"> Queremos que una gestoría presente los impuestos</label>
+      </div>
+      <div class="field">
+        <label for="venta">¿Vais a vender la casa?</label>
+        <select id="venta">
+          <option value="no">No, nos la quedamos</option>
+          <option value="contado">Sí, el comprador paga al contado</option>
+          <option value="hipoteca">Sí, el comprador necesita hipoteca</option>
+        </select>
+      </div>
+    </div>
+  </form>
+
+  <div class="out" id="out" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- BIBLIOTECA -->
+<section style="display:flex;flex-direction:column;gap:24px" aria-labelledby="tCasos">
+  <div class="sec-head">
+    <div class="eyebrow">Todas las situaciones</div>
+    <h2 id="tCasos">Busca tu caso y ábrelo</h2>
+  </div>
+
+  <div class="lib">
+
+    <div class="group">
+      <h3>Antes de empezar</h3>
+      <details>
+        <summary>¿Por dónde empiezo? Los 3 primeros papeles</summary>
+        <div class="dc">
+          <ul>
+            <li><b>Certificado de defunción.</b> Registro Civil o sede del Ministerio de Justicia. Gratis. Pide el literal.</li>
+            <li><b>Certificado de últimas voluntades.</b> Dice si hizo testamento y ante qué notario. Se pide pasados 15 días hábiles desde el fallecimiento, con el modelo 790 código 006. Tasa: 3,86 €.</li>
+            <li><b>Certificado de seguros de vida.</b> Mismo impreso, otros 3,86 €. Pídelos juntos.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>¿Qué se paga y en qué orden?</summary>
+        <div class="dc">
+          <dl class="kv">
+            <dt>1. Al empezar</dt><dd>Certificados: 7,72 € por fallecido.</dd>
+            <dt>2. En la notaría</dt><dd>Copia del testamento (30–50 €) o declaración de herederos (250–350 €).</dd>
+            <dt>3. Inventario</dt><dd>Notas simples del Registro: unos 9 € cada una.</dd>
+            <dt>4. Al firmar</dt><dd>La escritura de herencia se paga en la notaría el día de la firma o al recoger las copias.</dd>
+            <dt>5. Antes de 6 meses</dt><dd>Impuesto de Sucesiones (Junta) y plusvalía (Ayuntamiento).</dd>
+            <dt>6. Al final</dt><dd>Registro de la Propiedad, al inscribir la casa.</dd>
+          </dl>
+          <p>Ojo: los 6 meses de los impuestos cuentan desde el fallecimiento, no desde la firma. Si la escritura va a tardar, se pueden presentar antes o pedir prórroga.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Cuánto cuesta cada cosa en Sevilla?</summary>
+        <div class="dc">
+          <p>Notaría y Registro cobran por un <b>arancel oficial</b>, igual en toda España, que depende del valor. Por eso se puede calcular bastante bien.</p>
+          <dl class="kv">
+            <dt>Certificados</dt><dd>Defunción gratis · últimas voluntades 3,86 € · seguros 3,86 €</dd>
+            <dt>Copia del testamento</dt><dd>30–50 €</dd>
+            <dt>Declaración de herederos</dt><dd>250–350 €</dd>
+            <dt>Escritura de herencia</dt><dd>Herencia de 100.000 € ≈ 550–700 € · 200.000 € ≈ 650–850 € · 400.000 € ≈ 800–1.050 €</dd>
+            <dt>Registro (por piso)</dt><dd>150–300 €</dd>
+            <dt>Nota simple</dt><dd>≈ 9 € por finca</dd>
+            <dt>Gestoría para los impuestos</dt><dd>150–400 € (opcional)</dd>
+            <dt>Plusvalía</dt><dd>Según el suelo y los años: en un piso normal de Sevilla, 300–3.000 € antes de rebajas</dd>
+          </dl>
+        </div>
+      </details>
+      <details>
+        <summary>¿Cuánto tarda todo?</summary>
+        <div class="dc">
+          <dl class="kv">
+            <dt>Certificados</dt><dd>1–3 semanas</dd>
+            <dt>Declaración de herederos</dt><dd>1–2 meses</dd>
+            <dt>Inventario, bancos, notas</dt><dd>2–4 semanas</dd>
+            <dt>Firma en notaría</dt><dd>Cita en 1–3 semanas</dd>
+            <dt>Impuestos y Registro</dt><dd>1–2 meses</dd>
+          </dl>
+          <p>Sencilla y con acuerdo: <b>2–6 meses</b>. Con desacuerdo, puede irse a años.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Necesito abogado o gestoría?</summary>
+        <div class="dc">
+          <p>Si estáis de acuerdo, el notario prepara la escritura y muchas notarías o gestorías presentan también los impuestos. Abogado solo hace falta si hay desacuerdo, un heredero que no aparece, menores con intereses enfrentados o deudas importantes.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Si os falta un papel</h3>
+      <details>
+        <summary>No tengo el certificado de defunción</summary>
+        <div class="dc">
+          <ul>
+            <li><b>Murió en España:</b> se pide al Registro Civil del lugar donde falleció. Se puede pedir por internet en la sede electrónica del Ministerio de Justicia (sin certificado digital), por correo o en persona. Gratis. Da igual que fuera hace 1 año o hace 40.</li>
+            <li><b>Murió fuera de España</b> siendo español: si la muerte se inscribió en el consulado, se pide al Registro Civil Central. Si no se inscribió, primero hay que inscribirla con el certificado del país (legalizado o apostillado y traducido).</li>
+            <li>Plazo normal: 1–3 semanas por internet o correo; en persona a veces en el día.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>Cómo pedir el certificado de últimas voluntades (y si no lo dan)</summary>
+        <div class="dc">
+          <p><b>Qué necesitas:</b> el certificado de defunción, el modelo 790 código 006 relleno y la tasa pagada (3,86 €). No hace falta ser familiar.</p>
+          <ul>
+            <li><b>Por internet:</b> sede electrónica del Ministerio de Justicia, con certificado digital o Cl@ve. Pagas la tasa con tarjeta.</li>
+            <li><b>En persona:</b> en la Gerencia Territorial de Justicia de Sevilla, con cita previa. Pagas antes la tasa en el banco con el impreso. Suelen darlo en el momento.</li>
+            <li><b>Por correo:</b> al Registro General de Actos de Última Voluntad (Madrid), con el impreso, el justificante de pago y copia del certificado de defunción. Tarda 2–3 semanas.</li>
+          </ul>
+          <p><b>Si te lo rechazan:</b> casi siempre es porque no han pasado 15 días hábiles desde el fallecimiento, porque falta el certificado de defunción, o porque la tasa no está pagada o no coincide. Corrige eso y vuelve a pedirlo.</p>
+          <p><b>Si dice "no consta" pero creéis que hizo testamento:</b> puede ser un testamento escrito a mano (no se registra: buscad entre sus papeles) o hecho en otro país (hay que buscarlo en el registro de ese país). Si no aparece nada, se sigue como herencia sin testamento.</p>
+        </div>
+      </details>
+      <details>
+        <summary>El certificado dice que hay testamento, pero no lo tenemos</summary>
+        <div class="dc">
+          <ul>
+            <li>El certificado dice el notario, la ciudad y la fecha. Pide la copia en esa notaría con el certificado de defunción, el de últimas voluntades y tu DNI. 30–50 €.</li>
+            <li>Si el notario ya no está (jubilado o trasladado), su archivo lo tiene el notario que le sustituyó en la misma ciudad. Llama al Colegio Notarial de Andalucía y te dicen quién lo guarda.</li>
+            <li>Los testamentos de hace más de 25 años pasan al archivo de protocolos del distrito. Se piden igual a través de una notaría.</li>
+            <li>Pueden pedir copia los herederos y quienes demuestren interés. Si solo eres nieto o sobrino, lleva papeles que prueben el parentesco.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>No tenemos el libro de familia</summary>
+        <div class="dc">
+          <p>No es imprescindible. Lo sustituyen el <b>certificado de matrimonio</b> del fallecido y el <b>certificado de nacimiento literal</b> de cada hijo. Se piden igual que el de defunción, gratis, en el Registro Civil o por internet. Si quieres, también puedes pedir un duplicado del libro.</p>
+        </div>
+      </details>
+      <details>
+        <summary>No encontramos la escritura de la casa</summary>
+        <div class="dc">
+          <ul>
+            <li>Pide una <b>nota simple</b> en el Registro de la Propiedad (unos 9 €, por internet): dice de quién es la casa, desde cuándo y qué cargas tiene. Para la herencia muchas veces basta.</li>
+            <li>Si necesitas la escritura, pide una copia en la notaría que la firmó (sale en la nota simple). Si es muy antigua, está en el archivo de protocolos. 30–60 €.</li>
+            <li>El notario de la herencia puede pedir todo esto por vosotros.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>No sabemos qué bancos o cuentas tenía</summary>
+        <div class="dc">
+          <ul>
+            <li>Revisa cartas, extractos, recibos domiciliados y su móvil o correo.</li>
+            <li>Mira la declaración de la renta del fallecido: salen sus cuentas, depósitos e inversiones. Acreditando que sois herederos, Hacienda puede daros su información fiscal; pide cita en una oficina de la Agencia Tributaria.</li>
+            <li>Pide el informe <b>CIRBE</b> del Banco de España: muestra los préstamos y avales que tenía.</li>
+            <li>Con el certificado de defunción, ve a los bancos de la zona donde vivía y pregunta. Están obligados a informar a los herederos.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>La casa está a nombre de los abuelos</summary>
+        <div class="dc">
+          <p>Pasa mucho: una herencia anterior nunca se hizo. No se puede saltar. Hay que hacer <b>primero la herencia de los abuelos</b> y después la actual. Se pueden firmar las dos en la misma escritura.</p>
+          <p>Para la de los abuelos necesitáis sus certificados de defunción y de últimas voluntades, y su testamento o declaración de herederos. Sus impuestos estarán casi seguro prescritos, pero hay que presentarlos alegándolo.</p>
+        </div>
+      </details>
+      <details>
+        <summary>La casa no está inscrita en el Registro</summary>
+        <div class="dc">
+          <p>Se puede hacer la herencia igual, pero para venderla o hipotecarla hay que inscribirla. Se hace un <b>expediente de dominio</b> ante notario, con la escritura o el documento de compra, el certificado del Catastro y las pruebas de que era suya. Tarda 2–6 meses y suele costar 800–1.500 € entre notario y registro.</p>
+        </div>
+      </details>
+      <details>
+        <summary>No tenemos testigos para la declaración de herederos</summary>
+        <div class="dc">
+          <p>Sirven vecinos, amigos o compañeros que conocieran a la familia. No pueden ser herederos. Si de verdad no hay nadie, consúltalo con el notario: puede aceptar otras pruebas, como los certificados del Registro Civil y el padrón.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Testamento</h3>
+      <details>
+        <summary>Hay testamento: qué hacer</summary>
+        <div class="dc">
+          <ul>
+            <li>El certificado de últimas voluntades dice el notario y la fecha del <b>último</b> testamento, que es el que vale.</li>
+            <li>Pide la copia autorizada en esa notaría (30–50 €). Si el notario se jubiló, el protocolo lo guarda otro notario o el Colegio Notarial de Andalucía.</li>
+            <li>Con la copia no hace falta declaración de herederos.</li>
+          </ul>
+          <p>El testamento más habitual en matrimonios es el "del uno para el otro": el viudo se queda el usufructo de todo y los hijos la nuda propiedad.</p>
+        </div>
+      </details>
+      <details>
+        <summary>No hay testamento: declaración de herederos</summary>
+        <div class="dc">
+          <p>Se hace ante notario (del último domicilio o de donde estén los bienes) con: defunción, últimas voluntades, libro de familia, DNI y <b>dos testigos</b> que conocieran a la familia y no sean herederos. Tarda 1–2 meses y cuesta 250–350 €.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Quién hereda si no hay testamento?</summary>
+        <div class="dc">
+          <ul>
+            <li><b>1º Hijos</b> a partes iguales. Si un hijo murió antes, sus hijos en su lugar.</li>
+            <li><b>2º Padres.</b></li>
+            <li><b>3º Cónyuge</b>, si no hay hijos ni padres. Se lo lleva todo.</li>
+            <li><b>4º Hermanos y sobrinos.</b></li>
+            <li><b>5º Otros parientes</b> hasta primos hermanos.</li>
+            <li><b>6º La Junta de Andalucía.</b></li>
+          </ul>
+          <p>El viudo, aunque haya hijos o padres, tiene un <b>usufructo</b>: de 1/3 con hijos, de la mitad con padres. La pareja de hecho no hereda sin testamento.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Testamento escrito a mano</summary>
+        <div class="dc">
+          <p>Vale si está escrito y firmado entero a mano, con fecha. Hay que presentarlo ante notario <b>en un plazo de 5 años</b> desde el fallecimiento. Pasado ese plazo, no sirve.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Matrimonio y viudo/a</h3>
+      <details>
+        <summary>Fallece uno de los dos del matrimonio</summary>
+        <div class="dc">
+          <p><b>Primero se separa lo que ya era del viudo.</b> En gananciales, la mitad de lo ganancial ya es suya. Solo la otra mitad es herencia.</p>
+          <p>Esa mitad se reparte según el testamento o la ley. Sin testamento y con hijos: los hijos la heredan a partes iguales y el viudo tiene el usufructo de un tercio.</p>
+        </div>
+      </details>
+      <details>
+        <summary>El usufructo del viudo en la práctica</summary>
+        <div class="dc">
+          <p>Usufructo es poder usar la casa o cobrar sus alquileres. Los hijos tienen la <b>nuda propiedad</b>: son dueños, pero no la usan hasta que fallezca el viudo. Para vender firman todos. El dinero se reparte según la edad del viudo: a más edad, menos vale su usufructo.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Murió hace años y ahora ha fallecido el viudo</summary>
+        <div class="dc">
+          <p>Son <b>dos herencias</b>. Se pueden firmar en la misma escritura y sale más barato. Hacen falta los certificados de los dos y cada herencia tiene su propio impuesto y su propia prescripción.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Pareja de hecho</summary>
+        <div class="dc">
+          <p>Sin testamento no hereda. Con testamento sí, y en Andalucía la pareja inscrita paga el impuesto como un cónyuge: prácticamente nada.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Hijos y nietos</h3>
+      <details>
+        <summary>Un hijo murió ANTES que su padre o madre</summary>
+        <div class="dc">
+          <p>Sus hijos (los nietos) heredan su parte y se la reparten. <b>Su viuda o viudo no hereda nada</b> del suegro. Si no dejó hijos, su parte va a sus hermanos.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Un hijo murió DESPUÉS que su padre o madre</summary>
+        <div class="dc">
+          <p>Ese hijo ya era heredero cuando murió, así que <b>su derecho pasa a sus herederos</b>: su viuda y sus hijos, según su testamento o la ley. Hay que tramitar también sus papeles (defunción, últimas voluntades, testamento o declaración).</p>
+          <p>Para el impuesto, el Tribunal Supremo considera que heredan directamente del primer fallecido. Sus hijos son nietos (no pagan), pero su viuda es nuera, que es grupo III y sí puede pagar si no está prescrito.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Hijos de distintas parejas o adoptados</summary>
+        <div class="dc">
+          <p>Todos los hijos tienen los mismos derechos, sean del matrimonio o no, o adoptados. Los hijastros no heredan salvo por testamento.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Herederos menores o con discapacidad</summary>
+        <div class="dc">
+          <ul>
+            <li>Los padres firman por sus hijos menores.</li>
+            <li>Si el padre o la madre también hereda, hay conflicto de intereses y el juzgado nombra un <b>defensor judicial</b> (1–3 meses), salvo reparto a partes exactamente iguales.</li>
+            <li>Para renunciar en nombre de un menor hace falta permiso del juez.</li>
+            <li>Con discapacidad hay reducciones extra en el impuesto (250.000 € o 500.000 €).</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Problemas entre herederos</h3>
+      <details>
+        <summary>Un heredero no firma o no contesta</summary>
+        <div class="dc">
+          <ul>
+            <li><b>Requerimiento notarial:</b> tiene 30 días naturales para aceptar o renunciar. Si calla, se entiende que acepta. 150–300 €.</li>
+            <li><b>Contador-partidor:</b> si lo piden herederos que sumen al menos la mitad, el notario o el juez nombran a alguien que hace el reparto sin la firma de todos.</li>
+            <li><b>Juzgado:</b> último recurso. Lento y caro.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>Uno quiere vender la casa y otro no</summary>
+        <div class="dc">
+          <p>La casa puede quedar a nombre de todos (proindiviso). Nadie está obligado a seguir así: cualquiera puede pedir la división, y si no se puede dividir, se vende y se reparte. También uno puede comprar la parte de los demás.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Un heredero quiere renunciar</summary>
+        <div class="dc">
+          <p>Se hace ante notario (unos 60–120 €) y es para siempre. Sin testamento, su parte pasa a los demás. Si renuncia "a favor de" un hermano concreto, en realidad le está donando y paga más impuestos.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Un heredero vive en el extranjero</summary>
+        <div class="dc">
+          <p>Firma en el consulado o envía un poder apostillado. Necesitará NIE. Suma 100–400 € y unas semanas.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Impuestos</h3>
+      <details>
+        <summary>Impuesto de Sucesiones: quién paga cuánto</summary>
+        <div class="dc">
+          <dl class="kv">
+            <dt>Hijos, nietos, cónyuge, padres</dt><dd>0 € hasta 1.000.000 € por heredero. Por encima, el 1 % de la cuota.</dd>
+            <dt>Hermanos, sobrinos, tíos, nuera, yerno, suegros</dt><dd>Reducción de unos 10.000 € y sin rebaja en la cuota. Pagan.</dd>
+            <dt>Primos y no familiares</dt><dd>Sin reducción. Pagan más.</dd>
+          </dl>
+          <p>Se presenta en la Agencia Tributaria de Andalucía: un modelo 660 (inventario) y un 650 por heredero. Aunque salga 0 € hay que presentarlo.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Hermanos o sobrinos: todo lo que se paga</summary>
+        <div class="dc">
+          <p>Sin hijos, padres ni cónyuge, heredan los hermanos. Si un hermano murió antes, entran sus hijos.</p>
+          <p><b>1. Impuesto de Sucesiones.</b> Lo que paga cada heredero, aproximadamente:</p>
+          <dl class="kv">
+            <dt>Recibe 50.000 €</dt><dd>≈ 3.700 – 6.000 €</dd>
+            <dt>Recibe 100.000 €</dt><dd>≈ 11.000 – 17.000 €</dd>
+            <dt>Recibe 200.000 €</dt><dd>≈ 29.500 – 47.000 €</dd>
+          </dl>
+          <p><b>2. Plusvalía municipal, entera.</b> En Sevilla, la rebaja por vivienda habitual es solo para hijos, padres y cónyuge.</p>
+          <p><b>3. Notaría, Registro y papeles</b>, igual que cualquier herencia.</p>
+          <p>Calculad el impuesto <b>antes</b> de aceptar. Se puede pedir aplazamiento o fraccionamiento, o vender la casa y pagar con ese dinero.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Plusvalía municipal en Sevilla</summary>
+        <div class="dc">
+          <p><b>Cálculo:</b> valor catastral del suelo × coeficiente por años de tenencia × 26,53 %. También se puede calcular sobre la ganancia real (valor ahora menos valor de compra), y se paga la que salga más baja. Si la casa no ha ganado valor, no se paga.</p>
+          <p><b>Rebaja en herencias</b> (hay que pedirla, no es automática): para la vivienda habitual del fallecido que heredan hijos, padres o cónyuge, si la herencia no supera 500.000 € y se conserva 3 años:</p>
+          <dl class="kv">
+            <dt>Suelo hasta 10.000 €</dt><dd>95 %</dd>
+            <dt>Suelo hasta 20.000 €</dt><dd>50 %</dd>
+            <dt>Suelo hasta 50.000 €</dt><dd>30 %</dd>
+            <dt>Otros inmuebles</dt><dd>10 %</dd>
+          </dl>
+          <p><b>Plazo:</b> 6 meses desde el fallecimiento, ampliable a 1 año si se pide antes. Se paga en la Agencia Tributaria de Sevilla (Ayuntamiento). Fuera de Sevilla capital, cada pueblo tiene su tipo y sus rebajas.</p>
+          <p class="muted small">Los coeficientes cambian cada año y hay uno nuevo en trámite desde diciembre de 2026. Las cifras son orientativas.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Se nos pasaron los 6 meses</summary>
+        <div class="dc">
+          <p>Presentadlo cuanto antes. Si hay algo que pagar, se suma un recargo (1 % más 1 % por mes, hasta el 15 %) e intereses. Si la cuota es 0 €, el recargo es 0 €.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Murió hace más de 4 años y medio</summary>
+        <div class="dc">
+          <ul>
+            <li>Sucesiones y plusvalía están <b>prescritos</b>: ya no se pagan.</li>
+            <li>Pero hay que presentar el 650/660 y la plusvalía <b>alegando la prescripción</b>. Os devuelven el impreso sellado y con eso el Registro inscribe la casa.</li>
+            <li>La prescripción se interrumpe si os llegó algún requerimiento o si presentasteis algún papel. Revisad cartas antiguas.</li>
+            <li>Si el viudo o un hijo murieron después, cada fallecimiento tiene su propio plazo.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>La renta (IRPF) del fallecido</summary>
+        <div class="dc">
+          <p>Los herederos presentan la declaración del año del fallecimiento, en la campaña siguiente, si estaba obligado.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>Dinero, deudas y bancos</h3>
+      <details>
+        <summary>La herencia tiene deudas o hipoteca</summary>
+        <div class="dc">
+          <ul>
+            <li><b>Aceptar sin más</b> si hay claramente más bienes que deudas.</li>
+            <li><b>Aceptar a beneficio de inventario</b>: solo respondes hasta lo que valen los bienes.</li>
+            <li><b>Renunciar</b> si las deudas son mayores.</li>
+          </ul>
+          <p>Para conocer las deudas, pide al Banco de España el informe CIRBE del fallecido. La hipoteca sigue pagándose; mira si había seguro de vida vinculado.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Cuentas bloqueadas</summary>
+        <div class="dc">
+          <p>El banco bloquea las cuentas al saber del fallecimiento. Ser cotitular no te hace dueño de todo. Pide el certificado de saldos a la fecha de fallecimiento. El banco suele dejar pagar el entierro y los impuestos de la herencia; el resto se libera con la escritura y el justificante del impuesto.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Seguros de vida y planes de pensiones</summary>
+        <div class="dc">
+          <p>No son parte de la herencia: los cobra el beneficiario. El seguro de vida tributa en Sucesiones (casi nada para la familia directa). El plan de pensiones tributa en el IRPF de quien lo cobra.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="group">
+      <h3>La casa heredada</h3>
+      <details>
+        <summary>Inscribir la casa a vuestro nombre</summary>
+        <div class="dc">
+          <p>Con la escritura y los justificantes de los dos impuestos, en el Registro de la Propiedad (150–300 € por piso). La notaría suele presentarlo. Después cambiad IBI, luz, agua, comunidad y seguro.</p>
+        </div>
+      </details>
+      <details>
+        <summary>¿Hay que tenerla a nuestro nombre en el Registro para venderla?</summary>
+        <div class="dc">
+          <p><b>No hace falta que esté inscrita a vuestro nombre.</b> Lo que sí hace falta antes de firmar la venta:</p>
+          <ul>
+            <li>La <b>escritura de herencia firmada</b> (puede ser el mismo día, justo antes, en la misma notaría).</li>
+            <li>El <b>Impuesto de Sucesiones y la plusvalía de la herencia presentados</b> (o alegada la prescripción). Sin eso el Registro no inscribe ni la herencia ni la venta, y el notario o el comprador lo pedirán.</li>
+          </ul>
+          <dl class="kv">
+            <dt>Comprador al contado</dt><dd>Se puede firmar todo el mismo día: herencia y compraventa. Después se presentan las dos escrituras juntas al Registro, primero la herencia y luego la venta.</dd>
+            <dt>Comprador con hipoteca</dt><dd>Manda el banco del comprador. Muchos aceptan firmar herencia, compraventa e hipoteca el mismo día si los impuestos están presentados. Otros exigen ver la herencia ya inscrita en la nota simple, lo que suma 2–6 semanas. Preguntadlo al banco del comprador antes de firmar arras.</dd>
+          </dl>
+          <p><b>Ojo si heredan hermanos o sobrinos</b> y no han pasado 2 años desde el fallecimiento: la inscripción no protege del todo al comprador durante ese tiempo (art. 28 de la Ley Hipotecaria). Algunos bancos piden más garantías o esperar. Con hijos, padres o cónyuge no pasa.</p>
+          <p><b>Las arras</b> se pueden firmar antes de tener la herencia hecha. Firman todos los herederos y, si hay, el viudo usufructuario. Dejad un plazo suficiente (2–3 meses) y poned que la herencia está en trámite. Firmar arras ya supone aceptar la herencia.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Vender con el viudo usufructuario: cómo se reparte el dinero</summary>
+        <div class="dc">
+          <p>Firman el viudo y los hijos. El precio se reparte según el valor del usufructo, que depende de la edad del viudo: <b>89 menos su edad, en %</b>, con un mínimo del 10 % y un máximo del 70 %.</p>
+          <div class="ex"><b>Ejemplo:</b> viudo de 74 años, venta por 200.000 € de una casa toda de la herencia. Usufructo = 89 − 74 = 15 % → 30.000 € para el viudo y 170.000 € para los hijos. Pueden pactar otro reparto si están de acuerdo.</div>
+        </div>
+      </details>
+      <details>
+        <summary>La casa tiene metros o una planta sin declarar</summary>
+        <div class="dc">
+          <p>Se puede hacer la herencia igual, y en la misma escritura declarar la ampliación por antigüedad. Para el detalle (metros, obras, división horizontal, si el banco hipoteca o no), mira la web <a href="regularizar.html">Regularizar la Vivienda</a>.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Queremos vender la casa heredada: impuestos de la venta</summary>
+        <div class="dc">
+          <ul>
+            <li>La herencia tiene que estar hecha. Se pueden firmar herencia y venta el mismo día.</li>
+            <li>Firman todos los herederos, también el viudo usufructuario.</li>
+            <li>En el IRPF, la ganancia se calcula desde el <b>valor declarado en la herencia</b>. Para hijos en Andalucía, como el impuesto sale a 0 €, conviene declarar un valor realista: un valor bajo hace pagar más IRPF al vender.</li>
+            <li>Al vender se paga otra plusvalía municipal por los años que la tuvieron los herederos.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
+  </div>
+</section>
+
+<section class="ck" aria-labelledby="ckT">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:70ch">
+    <div class="eyebrow">Antes de vender</div>
+    <h2 id="ckT">Los 6 puntos que se revisan antes de poner una casa a la venta</h2>
+    <p class="muted">Es el informe jurídico que se hace antes de publicar una vivienda. Si uno falla, se resuelve antes de firmar arras, no en la notaría.</p>
+  </div>
+  <div class="ck-grid">
+    <div class="ck-item"><span class="ck-n">1</span><div><h3>Propietarios</h3><p>Los que firman tienen que ser los mismos que salen en la nota simple, todos y con DNI. Si falta una herencia o un divorcio por resolver, se hace primero.</p><span class="here">Lo explica esta web.</span> </div></div>
+    <div class="ck-item"><span class="ck-n">2</span><div><h3>VPO</h3><p>Si es protegida: tipo, antigüedad, precio máximo y autorización de la Junta. Y si hay derecho de tanteo (de la Junta o, en Sevilla, de EMVISESA). A veces conviene pedir la descalificación.</p><a href="vpo.html">Guía de la VPO →</a></div></div>
+    <div class="ck-item"><span class="ck-n">3</span><div><h3>Cargas</h3><p>Hipotecas, embargos o condiciones resolutorias que salgan en la nota simple. Se cancelan antes o en la misma firma, con el dinero de la venta.</p></div></div>
+    <div class="ck-item"><span class="ck-n">4</span><div><h3>Superficie</h3><p>Que coincidan los metros del Catastro y de la nota simple, y que la casa esté declarada como es (sin plantas ni ampliaciones fuera del Registro).</p><a href="regularizar.html">Regularizar la Vivienda →</a></div></div>
+    <div class="ck-item"><span class="ck-n">5</span><div><h3>Fiscalidad</h3><p>Fecha y precio de compra, IRPF que pagará el vendedor (o si puede reinvertir) y plusvalía municipal.</p><a href="reinversion.html">Reinversión IRPF →</a></div></div>
+    <div class="ck-item"><span class="ck-n">6</span><div><h3>Situación familiar</h3><p>Divorcios, separaciones o viviendas en las que el otro tiene el uso: condicionan quién firma y qué impuestos hay.</p><a href="divorcio.html">Divorcio y Vivienda →</a></div></div>
+  </div>
+  <div class="ck-docs">
+    <div><h3>Papeles que se piden al vendedor</h3><ul>
+      <li>Escritura de la vivienda</li><li>DNI de todos los propietarios, con teléfono y correo</li><li>Último recibo del IBI</li><li>Último recibo de comunidad</li><li>Certificado energético (si no lo tiene, se encarga)</li><li>Antes de firmar: certificado de la comunidad de estar al corriente, estar al día del IBI y certificado de deuda del banco si hay hipoteca</li>
+    </ul></div>
+    <div><h3>En la firma y después</h3><ul>
+      <li>Antes de la notaría se entrega a cada parte la liquidación: lo que cobra o paga cada uno</li><li>El IBI del año se reparte entre vendedor y comprador en la propia notaría, para no reclamarlo después</li><li>Las cargas se cancelan con el dinero de la venta</li><li>Después: plusvalía municipal, cambio de luz, agua, comunidad y vado, y entrega de llaves</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Guía orientativa.</b> Importes calculados con los aranceles oficiales de notarios y registradores, la ordenanza de plusvalía de Sevilla (tipo 26,53 %) y la normativa andaluza del Impuesto de Sucesiones (Ley 5/2021), a octubre de 2026. Cada herencia tiene detalles propios: confirma tu caso con un notario, gestor o abogado antes de firmar o presentar nada.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' €';
+  const r10 = n => n<100 ? Math.round(n) : Math.round(n/10)*10;
+  const rng = (a,b) => (r10(a)===r10(b)) ? fmt(r10(a)) : fmt(r10(a)) + ' – ' + fmt(r10(b));
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  const EJEMPLO = {fecha:'2016-10-15', test:'no', estado:'gananciales', viudoMuerto:'no', hijos:3, hijoFall:'despues', nietos:2,
+    otros:'hermanos', nher:3, valor:180000, inm:1, vcs:18000, anios:20, vh:true, sevilla:true, deudas:false, seguro:true,
+    acuerdo:'si', menores:false, extranjero:false, gestoria:false, venta:'no', fDef:false, fUV:false, fTest:false, fLib:false, fEsc:false, fBan:false, fPrev:false, fNoIns:false};
+
+  function load(d){ for(const k in d){ const el=$(k); if(!el) continue; if(el.type==='checkbox') el.checked=!!d[k]; else el.value=d[k]; } }
+  function read(){
+    const n=(id,def)=>{ const v=parseFloat($(id).value); return isNaN(v)?def:Math.max(0,v); };
+    return { fecha:$('fecha').value, test:$('test').value, estado:$('estado').value, viudoMuerto:$('viudoMuerto').value,
+      hijos:Math.round(n('hijos',0)), hijoFall:$('hijoFall').value, nietos:Math.round(n('nietos',0)), otros:$('otros').value,
+      nher:Math.max(1,Math.round(n('nher',1))), valor:n('valor',0), inm:Math.round(n('inm',0)),
+      vcs:$('vcs').value, anios:$('anios').value, vh:$('vh').checked, sevilla:$('sevilla').checked,
+      deudas:$('deudas').checked, seguro:$('seguro').checked, acuerdo:$('acuerdo').value,
+      menores:$('menores').checked, extranjero:$('extranjero').checked, gestoria:$('gestoria').checked, venta:$('venta').value,
+      fDef:$('fDef').checked, fUV:$('fUV').checked, fTest:$('fTest').checked, fLib:$('fLib').checked, fEsc:$('fEsc').checked, fBan:$('fBan').checked, fPrev:$('fPrev').checked, fNoIns:$('fNoIns').checked };
+  }
+
+  // ---- Aranceles oficiales (RD 1426/1989 notarios, RD 1427/1989 registradores), con rebaja del 5 % e IVA ----
+  function escala(v, base, tramos){ let t=base, prev=6010.12; for(const [hasta,pct] of tramos){ if(v<=prev) break; t+=(Math.min(v,hasta)-prev)*pct; prev=hasta; } return t; }
+  const notarioArancel = v => escala(v, 90.15, [[30050.61,.0045],[60101.21,.0015],[150253.03,.001],[601012.10,.0005],[6010121.04,.0003],[1e12,.0002]]);
+  const registroArancel = v => Math.min(escala(v, 24.04, [[30050.61,.00175],[60101.21,.00125],[150253.03,.00075],[601012.10,.0003],[1e12,.0002]]), 2181.67);
+  function costeNotario(valores, herederos){
+    const cuantia = valores.reduce((a,v)=>a+notarioArancel(v)*0.95,0);
+    const folios = 18 + 2*herederos + 8*(valores.length-1);
+    const matriz = Math.max(folios-4,0)*3.01, autorizada = folios*3.01, simples = folios*0.60*herederos;
+    const t = (cuantia+matriz+autorizada+simples+30)*1.21;
+    return [t*0.92, t*1.15];
+  }
+  function costeRegistro(valorFinca, n){ const t=(registroArancel(valorFinca)*0.95+20)*1.21*n; return [t*0.9, t*1.2]; }
+
+  // ---- Tarifa estatal ISD (aproximación para grupos III y IV) ----
+  const TRAMOS=[[0,0,7.65],[7993.46,611.50,8.50],[15980.91,1290.43,9.35],[23968.36,2037.26,10.20],[31955.81,2851.98,11.05],
+    [39943.26,3734.59,11.90],[47930.72,4685.10,12.75],[55918.17,5703.50,13.60],[63905.62,6789.79,14.45],[71893.07,7943.98,15.30],
+    [79880.52,9166.06,16.15],[119757.67,15606.22,18.70],[159634.83,23063.25,21.25],[239389.13,40011.04,25.50],
+    [398777.54,80655.08,29.75],[797555.08,199291.40,34.00]];
+  function tarifa(b){ if(b<=0) return 0; let t=TRAMOS[0]; for(const x of TRAMOS){ if(b>=x[0]) t=x; } return t[1]+(b-t[0])*t[2]/100; }
+
+  // Coeficientes de plusvalía por años (orientativos, vigentes en Sevilla en 2026)
+  const COEF=[0.15,0.15,0.14,0.15,0.17,0.18,0.19,0.18,0.15,0.12,0.10,0.09,0.09,0.09,0.09,0.11,0.13,0.17,0.23,0.29,0.40];
+
+  function mesesDesde(f){
+    if(!f) return null; const d=new Date(f+'T12:00:00'); if(isNaN(d)) return null;
+    const hoy=new Date(); if(d>hoy) return -1;
+    return (hoy.getFullYear()-d.getFullYear())*12 + (hoy.getMonth()-d.getMonth()) - (hoy.getDate()<d.getDate()?1:0);
+  }
+  function addMonths(f,m){ const d=new Date(f+'T12:00:00'); d.setMonth(d.getMonth()+m); return d; }
+  const fecha = d => d.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+
+  function render(){
+    const s=read();
+    const casado = s.estado==='gananciales' || s.estado==='separacion';
+    $('wViudo').hidden = !(casado);
+    $('wHijoFall').hidden = s.hijos===0;
+    $('wNietos').hidden = s.hijos===0 || s.hijoFall==='no';
+    $('wOtros').hidden = s.hijos>0;
+    $('otros').querySelector('[value=conyuge]').disabled = !casado;
+    if(!casado && s.otros==='conyuge'){ $('otros').value='hermanos'; s.otros='hermanos'; }
+    $('wNher').hidden = s.hijos>0 || s.otros==='conyuge' || s.otros==='padres' || (casado && s.test!=='si' && s.otros!=='padres');
+    $('wPlus').hidden = s.inm===0;
+
+    const m=mesesDesde(s.fecha);
+    const alerts=[], chips=[];
+
+    // ---- Plazos ----
+    let estadoPlazo='sin', prescrito=false;
+    if(m===null) chips.push(['Indica la fecha','warn']);
+    else if(m<0) chips.push(['Fecha futura','bad']);
+    else if(m<6){ estadoPlazo='plazo'; chips.push(['En plazo','ok']);
+      alerts.push(['ok','Estás en plazo para los impuestos','Los 6 meses terminan el '+fecha(addMonths(s.fecha,6))+'. Si no llegáis, pedid prórroga antes del '+fecha(addMonths(s.fecha,5))+'.']); }
+    else if(m<54){ estadoPlazo='fuera'; chips.push(['Fuera de plazo','warn']);
+      alerts.push(['warn','Ya pasaron los 6 meses','Presentad Sucesiones y plusvalía cuanto antes. Si hay algo que pagar, se suma un recargo (hasta el 15 %) e intereses. Prescribiría hacia el '+fecha(addMonths(s.fecha,54))+'.']); }
+    else if(m<60){ estadoPlazo='limite'; prescrito=true; chips.push(['Probablemente prescrito','warn']);
+      alerts.push(['warn','Probablemente prescrito','Han pasado más de 4 años y medio. Si en su día se pidió prórroga, el plazo llega a 5 años ('+fecha(addMonths(s.fecha,60))+'). Comprobadlo.']); }
+    else { estadoPlazo='prescrito'; prescrito=true; chips.push(['Impuestos prescritos','ok']); }
+
+    if(!prescrito && s.fecha && m>=0){
+      const d=new Date(s.fecha+'T12:00:00');
+      if(d<new Date('2018-01-01')) alerts.push(['warn','Se aplica la ley de cuando murió','Antes de 2018 la reducción para hijos en Andalucía era mucho menor que el millón actual. Pedid el cálculo exacto.']);
+      else if(d<new Date('2019-04-11')) alerts.push(['warn','Se aplica la ley de cuando murió','En esa fecha ya existía la reducción del millón, pero no la rebaja del 99 %. Afecta solo a herencias muy grandes.']);
+    }
+    const faltan=['fDef','fUV','fTest','fLib','fEsc','fBan','fPrev','fNoIns'].filter(k=>s[k]).length;
+    if(faltan) chips.push(['Faltan '+faltan+' papel'+(faltan>1?'es':''),'warn']);
+    chips.push(s.test==='si'?['Con testamento','']: s.test==='no'?['Sin testamento','']:['Testamento: por saber','warn']);
+
+    // ---- Quién hereda ----
+    const V=s.valor, viudo=casado;
+    let H=V; const notas=[], filas=[];
+    if(s.estado==='gananciales' && V>0){ H=V/2; notas.push('Si todo era ganancial, la mitad ('+fmt(V/2)+') ya es del viudo/a. La herencia es la otra mitad: '+fmt(H)+'.'); }
+    let grupo='I/II', nHer=1, directa=true;
+    if(s.hijos>0){
+      const est=[]; const vivos=s.hijos-(s.hijoFall!=='no'?1:0);
+      for(let i=0;i<vivos;i++) est.push({t:'Hijo/a '+(i+1),tipo:'hijo'});
+      if(s.hijoFall==='antes'){ if(s.nietos>0) est.push({t:'Hijos del hijo fallecido ('+s.nietos+')',tipo:'nietos'}); else notas.push('El hijo fallecido antes no dejó hijos: su parte va a sus hermanos. Su viudo/a no hereda.'); }
+      else if(s.hijoFall==='despues') est.push({t:'Herederos del hijo fallecido',tipo:'transm'});
+      const N=Math.max(est.length,1); nHer=N;
+      if(s.test==='si'){
+        filas.push(['Cada hijo, como mínimo','1/3 de la herencia repartido entre '+N+' (su legítima)', H/3/N]);
+        filas.push(['Un hijo mejorado, como máximo','Su legítima + el tercio de mejora + el tercio libre', H/3/N + H*2/3]);
+        if(viudo) filas.push(['Cónyuge viudo/a','Como mínimo, usufructo de 1/3. Lo habitual es que el testamento le deje el usufructo de todo', null]);
+        notas.push('Con testamento, el reparto exacto lo dice el testamento. Arriba tienes el mínimo y el máximo que permite la ley.');
+      } else {
+        est.forEach(e=>{
+          let txt='1/'+N+(viudo?' (en un tercio, sin poder usarlo mientras viva el viudo)':'');
+          if(e.tipo==='nietos') txt='1/'+N+' a repartir entre '+s.nietos+' nietos';
+          if(e.tipo==='transm') txt='1/'+N+' que pasa a su viudo/a e hijos';
+          filas.push([e.t, txt, H/N]);
+        });
+        if(viudo) filas.push(['Cónyuge viudo/a','Usufructo de 1/3: uso y rentas, no propiedad', null]);
+        if(s.estado==='pareja') notas.push('Sin testamento, la pareja de hecho no hereda.');
+      }
+      if(s.hijoFall==='despues') alerts.push(['warn','Hay que tramitar también los papeles del hijo fallecido','Su parte la reciben su viudo/a y sus hijos. Necesitáis su defunción, sus últimas voluntades y su testamento o declaración de herederos. Su viudo/a es nuera del primer fallecido (grupo III): si no estuviera prescrito, pagaría impuesto.']);
+      if(s.hijoFall==='antes' && s.nietos>0) alerts.push(['','Los nietos ocupan el lugar de su padre o madre','Firman los nietos (o sus padres si son menores). El viudo/a del hijo fallecido no hereda nada aquí.']);
+    } else {
+      if(s.test==='si'){
+        if(s.otros==='padres') filas.push(['Padres, como mínimo','La mitad (1/3 si hay viudo/a)', viudo?H/3:H/2]);
+        if(viudo) filas.push(['Cónyuge viudo/a', s.otros==='padres'?'Usufructo de la mitad como mínimo':'Usufructo de 2/3 como mínimo', null]);
+        filas.push(['El resto','A quien diga el testamento', null]);
+        if(s.otros==='hermanos'){ grupo='III'; directa=false; nHer=s.nher; }
+        if(s.otros==='lejanos'){ grupo='IV'; directa=false; nHer=s.nher; }
+      } else if(s.otros==='padres'){
+        filas.push(['Padres','Todo, a partes iguales', H]); if(viudo) filas.push(['Cónyuge viudo/a','Usufructo de la mitad', null]); nHer=2;
+      } else if(casado){
+        filas.push(['Cónyuge viudo/a','Toda la herencia (va por delante de hermanos y sobrinos)', H]); nHer=1;
+      } else if(s.otros==='hermanos'){
+        grupo='III'; directa=false; nHer=s.nher;
+        filas.push(['Hermanos / sobrinos ('+s.nher+')','Todo. Si un hermano murió antes, sus hijos se reparten su parte', H]);
+        if(s.nher>1) filas.push(['Cada uno, si es a partes iguales','1/'+s.nher, H/s.nher]);
+      } else {
+        grupo='IV'; directa=false; nHer=s.nher;
+        filas.push(['Parientes hasta primos hermanos ('+s.nher+')','Todo. Si no hay, la Junta de Andalucía', H]);
+        if(s.nher>1) filas.push(['Cada uno, aprox.','1/'+s.nher, H/s.nher]);
+      }
+      if(s.estado==='pareja' && s.test!=='si') notas.push('Sin testamento, la pareja de hecho no hereda.');
+    }
+    if(s.test==='nose') notas.push('Hasta tener el certificado de últimas voluntades no sabréis si hay testamento. Arriba tienes el reparto de la ley si no lo hay.');
+
+    // ---- Fallecidos ----
+    let fall=1; const extra=[]; const valores=[V];
+    if(casado && s.viudoMuerto==='si'){ fall++; extra.push('el cónyuge viudo'); valores.push(s.estado==='gananciales'?V/2:V*0.1); }
+    if(s.fPrev){ valores.push(V*0.85); }
+    if(s.hijos>0 && s.hijoFall==='despues'){ fall++; extra.push('el hijo fallecido después'); valores.push(H/nHer); }
+    if(extra.length){ chips.push([fall+' herencias en una','warn']);
+      alerts.push(['warn','Son '+fall+' herencias encadenadas','Además del primer fallecido hay que tramitar la de '+extra.join(' y la de ')+'. Se firman todas en la misma escritura.']); }
+
+    // ---- Impuesto de Sucesiones ----
+    const porHer = H/Math.max(nHer,1);
+    let isd=0, isdHi=0;
+    if(grupo==='I/II'){ if(porHer>1000000){ isd=tarifa(porHer-1000000)*0.01*nHer; isdHi=isd*1.1; } }
+    else if(grupo==='III'){ isd=tarifa(Math.max(porHer-10000,0))*nHer; isdHi=isd*1.5882; }
+    else { isd=tarifa(porHer)*nHer; isdHi=isd*2; }
+    const isdTeorico=[isd,isdHi];
+    let isdLo=isd; if(prescrito){ isdLo=0; isdHi=0; }
+    if(estadoPlazo==='fuera'){ isdHi*=1.15; }
+
+    // ---- Plusvalía ----
+    let plLo=0, plHi=0, plTeor=[0,0], plTxt='', bonifTxt='';
+    if(s.inm>0){
+      const vInm = V*0.85;
+      let vcs = parseFloat(s.vcs); const vcsDado = vcs>0; if(!vcsDado) vcs = vInm*0.18;
+      const an = parseFloat(s.anios);
+      const tipo = s.sevilla ? 0.2653 : 0.30;
+      let cLo, cHi;
+      if(!isNaN(an)){ const c=COEF[Math.min(Math.max(Math.floor(an),0),20)]; cLo=c*0.95; cHi=c*1.05; }
+      else { cLo=0.09; cHi=0.40; }
+      let lo=vcs*cLo*(s.sevilla?tipo:0.20), hi=vcs*cHi*tipo;
+      if(!vcsDado){ lo*=0.7; hi*=1.3; }
+      // Bonificación Sevilla (familia directa, herencia ≤ 500.000 €)
+      const familiaDirectaPlus = directa && (s.hijos>0 || s.otros==='padres' || casado);
+      if(s.sevilla && familiaDirectaPlus && V<=500000){
+        let bv=0;
+        if(s.vh){ const vcsViv = vcs/Math.max(s.inm,1); bv = vcsViv<=10000?0.95: vcsViv<=20000?0.50: vcsViv<=50000?0.30:0;
+          const restoBon = s.inm>1 ? 0.10 : 0; const pesoViv = 1/Math.max(s.inm,1);
+          const factor = pesoViv*(1-bv) + (1-pesoViv)*(1-restoBon);
+          lo*=factor; hi*=factor;
+          bonifTxt = 'Rebaja de Sevilla por vivienda habitual: '+Math.round(bv*100)+' %'+(s.inm>1?' en la vivienda y 10 % en el resto':'')+'. Hay que pedirla al presentarla.';
+        } else { lo*=0.9; hi*=0.9; bonifTxt='Rebaja de Sevilla del 10 % (no era vivienda habitual). Hay que pedirla.'; }
+      } else if(s.sevilla && !familiaDirectaPlus){ bonifTxt='Hermanos, sobrinos y otros parientes no tienen rebaja en Sevilla: se paga entera.'; }
+      else if(s.sevilla && V>500000){ bonifTxt='Sin rebaja: en Sevilla solo se aplica si la herencia no supera 500.000 €.'; }
+      else bonifTxt='Fuera de Sevilla capital, mira la ordenanza de tu Ayuntamiento: muchos tienen rebajas para hijos y cónyuge.';
+      plTeor=[lo,hi];
+      plTxt = vcsDado ? (isNaN(an)?'Calculada con tu valor de suelo (indica los años para afinar)':'Calculada con tu valor de suelo y años') : 'Estimada: pon el valor catastral del suelo para afinar';
+      if(prescrito){ plLo=0; plHi=0; } else { plLo=lo; plHi=hi*(estadoPlazo==='fuera'?1.15:1); }
+    }
+
+    // ---- Costes en orden ----
+    const C=[]; // [cuándo, concepto, mínimo, máximo, obligatorio]
+    C.push(['Certificados', 'Defunción (gratis), últimas voluntades y seguros de vida (3,86 € cada uno)'+(fall>1?' · de cada fallecido':''), 7.72*fall, 7.72*fall, true]);
+    if(s.test==='si') C.push(['Notaría','Copia del testamento', 30, 50, true]);
+    if(s.test==='no') C.push(['Notaría','Declaración de herederos', 250, 350, true]);
+    if(s.test==='nose') C.push(['Notaría','Copia del testamento (30–50 €) o declaración de herederos (250–350 €)', 30, 350, true]);
+    if(fall>1) C.push(['Notaría','Testamento o declaración de los otros fallecidos', 30*(fall-1), 350*(fall-1), true]);
+    C.push(['Inventario','Notas simples del Registro'+(s.inm>0?' ('+s.inm+')':''), 9*Math.max(s.inm,1), 11*Math.max(s.inm,1), true]);
+    if(s.fEsc) C.push(['Inventario','Copia de la escritura antigua de la casa', 30, 60, true]);
+    if(s.fPrev) C.push(['Notaría','Herencia anterior sin hacer: certificados y testamento o declaración de los abuelos', 270, 720, true]);
+    if(s.fNoIns) C.push(['Notaría','Expediente de dominio para inscribir la casa', 800, 1500, true]);
+    if(s.acuerdo==='ausente') C.push(['Notaría','Requerimiento al heredero que no contesta', 150, 300, true]);
+    if(s.menores) C.push(['Juzgado','Defensor judicial (solo si hay conflicto de intereses)', 0, 600, false]);
+    if(s.extranjero) C.push(['Extranjero','Poder apostillado y NIE', 100, 400, true]);
+    if(s.deudas) C.push(['Notaría','Aceptación a beneficio de inventario (si os interesa)', 0, 600, false]);
+    const nt=costeNotario(valores, Math.max(nHer + (viudo?1:0) + (s.hijoFall==='despues'?s.nietos:0),1));
+    C.push(['Firma','Escritura de herencia en notaría (arancel oficial + copias + IVA)', nt[0], nt[1], true]);
+    C.push(['Impuestos','Impuesto de Sucesiones · Junta de Andalucía'+(prescrito?' · prescrito':''), isdLo, isdHi, true]);
+    if(s.inm>0) C.push(['Impuestos','Plusvalía municipal · '+(s.sevilla?'Ayuntamiento de Sevilla':'tu Ayuntamiento')+(prescrito?' · prescrita':''), plLo, plHi, true]);
+    if(s.inm>0){ const rg=costeRegistro(V*0.85/s.inm, s.inm); C.push(['Registro','Inscripción en el Registro de la Propiedad'+(s.inm>1?' ('+s.inm+' fincas)':''), rg[0], rg[1], true]); }
+    if(s.acuerdo==='no') C.push(['Desacuerdo','Contador-partidor o abogado', 1500, 6000, false]);
+    if(s.gestoria) C.push(['Gestoría','Presentar Sucesiones y plusvalía por vosotros', 150, 400, false]);
+    const obl=C.filter(c=>c[4]), opt=C.filter(c=>!c[4]);
+    const oLo=obl.reduce((a,c)=>a+c[2],0), oHi=obl.reduce((a,c)=>a+c[3],0);
+    const pLo=opt.reduce((a,c)=>a+c[2],0), pHi=opt.reduce((a,c)=>a+c[3],0);
+
+    // ---- Alertas de impuestos ----
+    if(prescrito){
+      let txt='Han pasado '+Math.floor(m/12)+' años, así que ya no se pagan.';
+      const habria=[];
+      if(isdTeorico[1]>0) habria.push('Sucesiones ≈ '+rng(isdTeorico[0],isdTeorico[1]));
+      if(s.inm>0 && plTeor[1]>0) habria.push('plusvalía ≈ '+rng(plTeor[0],plTeor[1]));
+      if(habria.length) txt+=' Si no estuviera prescrito habríais pagado: '+habria.join(' y ')+'.';
+      txt+=' Aun así hay que presentar el 650/660 y la plusvalía alegando prescripción: el Registro pide ese sello para inscribir. Si os llegó algún requerimiento en estos años, la prescripción puede haberse interrumpido.';
+      alerts.push(['ok','Sucesiones y plusvalía están prescritos', txt]);
+    } else {
+      if(grupo!=='I/II') alerts.push(['bad','En vuestro caso el Impuesto de Sucesiones sí se paga','Hermanos, sobrinos y parientes lejanos no tienen la rebaja del 99 %. Calculad el impuesto antes de aceptar; se puede aplazar o fraccionar.']);
+      if(s.inm>0) alerts.push([directa?'':'warn','Plusvalía municipal: '+rng(plLo,plHi)+' en total', bonifTxt+' '+plTxt+'. Se reparte entre los herederos según su parte. Si la casa no ha ganado valor, no se paga.']);
+    }
+    if(s.venta!=='no' && s.inm>0){
+      const hh = (!directa && m!==null && m<24) ? ' Además, como heredan hermanos o sobrinos y no han pasado 2 años, algunos bancos piden esperar o más garantías.' : '';
+      if(s.venta==='contado') alerts.push(['ok','Venta al contado: se puede firmar todo el mismo día','No hace falta que la casa esté inscrita a vuestro nombre. Basta con firmar antes la escritura de herencia y tener presentados Sucesiones y la plusvalía. Herencia y compraventa pueden ir el mismo día en la misma notaría.']);
+      else alerts.push(['warn','Venta con hipoteca: manda el banco del comprador','Muchos bancos aceptan herencia, compraventa e hipoteca el mismo día con los impuestos presentados; otros quieren ver la herencia ya inscrita (2–6 semanas más). Preguntadlo antes de firmar arras.'+hh]);
+    }
+    if(s.deudas) alerts.push(['warn','Hay deudas: no aceptéis a ciegas','Pedid el informe CIRBE del Banco de España. Si las deudas pueden superar a los bienes, aceptad a beneficio de inventario o renunciad.']);
+    if(s.menores) alerts.push(['warn','Herederos menores o con discapacidad','Si su padre o madre también hereda, puede hacer falta un defensor judicial (1–3 meses más).']);
+    if(s.acuerdo==='ausente') alerts.push(['warn','Alguien no contesta','Requerimiento notarial: 30 días naturales para responder. Si calla, se entiende que acepta.']);
+    if(s.acuerdo==='no') alerts.push(['bad','Hay desacuerdo','Primero, contador-partidor ante notario (basta con herederos que sumen la mitad). El juzgado es lento y caro.']);
+
+    // ---- Pasos ----
+    const st=[];
+    st.push({t:'Reúne los papeles básicos', p:'Certificado de defunción literal'+(fall>1?' de cada fallecido':'')+', DNI de todos y libro de familia.', d:'Registro Civil o sede de Justicia', pl:'Cuando quieras', c:'Gratis'});
+    if(s.fDef) st.push({t:'Consigue el certificado de defunción', p:'Pídelo al Registro Civil del lugar donde murió, por internet en la sede del Ministerio de Justicia (no hace falta certificado digital), por correo o en persona. Si murió fuera de España, al Registro Civil Central; si nunca se inscribió allí, primero hay que inscribirla con el certificado del país apostillado y traducido.', d:'Registro Civil', pl:'1–3 semanas', c:'Gratis'});
+    if(s.fLib) st.push({t:'Sustituye el libro de familia', p:'Pide el certificado de matrimonio del fallecido y el de nacimiento literal de cada hijo. Valen lo mismo para el notario.', d:'Registro Civil o sede de Justicia', pl:'1–3 semanas', c:'Gratis'});
+    st.push({t:'Pide últimas voluntades y seguros de vida', p:'Modelo 790 código 006. El primero dice si hay testamento y dónde; el segundo, si hay seguros de vida.'+(s.fUV?' Cómo: por internet en la sede de Justicia con certificado digital o Cl@ve; en persona en la Gerencia Territorial de Justicia de Sevilla con cita previa y la tasa pagada en el banco (lo dan en el momento); o por correo a Madrid (2–3 semanas). Lleva siempre el certificado de defunción. Si lo rechazan, suele ser porque no han pasado 15 días hábiles, falta la defunción o la tasa no está bien pagada.':''), d:'Ministerio de Justicia', pl:'Pasados 15 días hábiles del fallecimiento', c:(7.72*fall).toFixed(2).replace('.',',')+' €'});
+    if(s.test==='si') st.push({t:'Consigue la copia del testamento', p:'En la notaría que indique el certificado. Dice quiénes heredan y cuánto.', d:'Notaría del testamento', pl:'1–2 semanas', c:'30–50 €'});
+    else if(s.test==='no') st.push({t:'Haz la declaración de herederos', p:'Acta ante notario con dos testigos que conozcan a la familia. Dice legalmente quiénes son los herederos.', d:'Notaría del último domicilio', pl:'1–2 meses', c:'250–350 €'});
+    else st.push({t:'Testamento o declaración de herederos', p:'Si el certificado dice que hay testamento, pide la copia. Si no consta, haz la declaración de herederos.', d:'Notaría', pl:'1 semana – 2 meses', c:'30–350 €'});
+    if(s.fTest && s.test!=='no') st.push({t:'Localiza el testamento', p:'El certificado dice notario, ciudad y fecha. Si esa notaría ya no existe, el Colegio Notarial de Andalucía te dice quién guarda su archivo. Pide allí la copia con la defunción, las últimas voluntades y tu DNI.', d:'Colegio Notarial de Andalucía / notaría que lo guarde', pl:'1–3 semanas', c:'30–50 €'});
+    if(s.fPrev) st.push({t:'Haz primero la herencia de los abuelos', p:'La casa está a nombre de los abuelos: sin su herencia no se puede hacer esta. Necesitáis sus defunciones, últimas voluntades y testamento o declaración de herederos. Se firma en la misma escritura. Sus impuestos estarán casi seguro prescritos; se presentan alegándolo.', d:'Registro Civil, Justicia y notaría', pl:'1–2 meses más', c:'270–720 € en papeles'});
+    if(fall>1) st.push({t:'Lo mismo para '+extra.join(' y '), p:'Cada fallecido necesita su testamento o declaración para saber quién ocupa su lugar.', d:'Notaría', pl:'A la vez', c:'30–350 € cada uno'});
+    st.push({t:'Haz el inventario', p:'Certificado de saldos de cada banco a la fecha del fallecimiento, notas simples de las casas, recibo del IBI (valor catastral), coches y seguros'+(s.deudas?', y todas las deudas (informe CIRBE)':'')+'.', d:'Bancos, Registro, Catastro', pl:'2–4 semanas', c:'≈ 9 € por nota simple'});
+    if(s.fEsc) st.push({t:'Recupera la escritura de la casa', p:'Primero una nota simple del Registro (por internet): dice de quién es y en qué notaría se firmó. Con eso pides copia en esa notaría o en el archivo de protocolos. El notario de la herencia puede pedirla por vosotros.', d:'Registro de la Propiedad y notaría', pl:'1–3 semanas', c:'≈ 40–70 €'});
+    if(s.fBan) st.push({t:'Averigua qué cuentas tenía', p:'Revisa cartas, recibos y su última declaración de la renta. Acreditando que sois herederos, pide cita en Hacienda para su información fiscal. Pide el informe CIRBE al Banco de España para saber sus préstamos. Pregunta en los bancos de su zona con el certificado de defunción.', d:'Hacienda, Banco de España, bancos', pl:'2–6 semanas', c:'Gratis'});
+    if(s.estado==='gananciales') st.push({t:'Separa la mitad del viudo/a', p:'Lo comprado estando casados es mitad del viudo. Solo la otra mitad es herencia. Va en la misma escritura.', d:'En la notaría', pl:'—', c:'Incluido en la escritura'});
+    if(s.acuerdo==='ausente') st.push({t:'Requiere al heredero que no contesta', p:'30 días naturales para aceptar o renunciar. Si calla, acepta.', d:'Notaría', pl:'1–2 meses', c:'150–300 €'});
+    if(s.acuerdo==='no') st.push({t:'Desbloquea el desacuerdo', p:'Contador-partidor ante notario o juzgado.', d:'Notaría o juzgado', pl:'Meses', c:'1.500–6.000 €'});
+    if(s.menores) st.push({t:'Defensor judicial (si hace falta)', p:'Si el padre o la madre del menor también hereda, el juez nombra a alguien que firme por el menor.', d:'Juzgado de Primera Instancia', pl:'1–3 meses', c:'0–600 €'});
+    st.push({t:'Firmad la escritura de herencia', p:'Todos los herederos firman el inventario y el reparto'+(fall>1?'. Las '+fall+' herencias van en la misma escritura':'')+'. Se paga en la notaría.', d:'Cualquier notaría', pl:'Cita en 1–3 semanas', c:rng(nt[0],nt[1])});
+    st.push({t: prescrito?'Sucesiones: presentad alegando prescripción':'Paga el Impuesto de Sucesiones', p:'Un modelo 660 con el inventario y un 650 por cada heredero ('+nHer+(viudo?' + viudo/a':'')+'). '+(prescrito?'Indicad que está prescrito y os devuelven el sello que pide el Registro.':(grupo==='I/II'?'Os sale a 0 € o casi, pero hay que presentarlo.':'En vuestro caso hay que pagar.')), d:'Agencia Tributaria de Andalucía (online u oficina de Sevilla)', pl: estadoPlazo==='plazo'?'Hasta el '+fecha(addMonths(s.fecha,6)):(prescrito?'Antes de ir al Registro':'Ya, fuera de plazo'), c: prescrito?'0 € (prescrito)':rng(isdLo,isdHi)});
+    if(s.inm>0) st.push({t: prescrito?'Plusvalía: presentad alegando prescripción':'Paga la plusvalía municipal', p:(prescrito?'Se presenta igualmente para que conste.':bonifTxt), d: s.sevilla?'Agencia Tributaria de Sevilla (Ayuntamiento)':'Ayuntamiento de cada inmueble', pl: estadoPlazo==='plazo'?'6 meses (ampliable a 1 año)':(prescrito?'Antes de ir al Registro':'Ya, fuera de plazo'), c: prescrito?'0 € (prescrita)':rng(plLo,plHi)});
+    if(s.fNoIns && s.inm>0) st.push({t:'Inscribe la casa por primera vez', p:'Como no está en el Registro, el notario tramita un expediente de dominio con el documento de compra, el certificado del Catastro y pruebas de que era del fallecido.', d:'Notaría y Registro', pl:'2–6 meses', c:'800–1.500 €'});
+    if(s.inm>0){ const rg=costeRegistro(V*0.85/s.inm, s.inm); st.push({t:'Inscribe la casa en el Registro', p:'Con la escritura y los justificantes de los dos impuestos. La notaría suele presentarlo.', d:'Registro de la Propiedad', pl:'2–4 semanas', c:rng(rg[0],rg[1])}); }
+    if(s.venta!=='no' && s.inm>0) st.push({t: s.venta==='contado'?'Firmad la venta':'Firmad la venta con la hipoteca del comprador', p: s.venta==='contado'?'Puede ser el mismo día que la herencia, si los impuestos están presentados. No hace falta esperar al Registro.':'Antes, preguntad al banco del comprador si acepta firmar el mismo día o quiere la herencia inscrita. Firman todos los herederos'+(viudo?' y el viudo usufructuario':'')+'.', d:'Notaría', pl: s.venta==='contado'?'El mismo día o cuando queráis':'Según el banco: mismo día o 2–6 semanas después', c:'La paga el comprador; el vendedor, la plusvalía de la venta'});
+    st.push({t:'Libera las cuentas y cambia titulares', p:'Banco (escritura + justificante del impuesto), IBI, luz, agua, comunidad, seguro y coches en la DGT.', d:'Bancos, compañías, DGT', pl:'Tras la escritura', c:'Tasa DGT si hay coche'});
+    if(s.seguro) st.push({t:'Cobra el seguro de vida', p:'Lo cobra el beneficiario con el certificado de defunción y el justificante del impuesto.', d:'Aseguradora', pl:'Cuando quieras', c:'—'});
+    if(m!==null && m<24) st.push({t:'Declara la renta del fallecido', p:'IRPF del año del fallecimiento, si estaba obligado.', d:'Agencia Tributaria (AEAT)', pl:'Abril–junio del año siguiente', c:'—'});
+
+    const ord={bad:0,warn:1,'':2,ok:3}; alerts.sort((a,b)=>ord[a[0]]-ord[b[0]]);
+    const filaC = c=>`<tr class="${c[4]?'':'opt'}"><td>${esc(c[0])}</td><td>${esc(c[1])} ${c[4]?'':'<span class="tag opt">Según el caso</span>'}</td><td class="r">${fmt(r10(c[2]))}</td><td class="r">${fmt(r10(c[3]))}</td></tr>`;
+
+    $('out').innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Resumen</div>
+        <div class="chips">${chips.map(c=>`<span class="chip ${c[1]}">${esc(c[0])}</span>`).join('')}</div>
+        <div class="big">
+          <div><b class="num">${rng(oLo,oHi)}</b><span>lo que hay que pagar sí o sí</span></div>
+          ${opt.length?`<div><b class="num">+ ${rng(pLo,pHi)}</b><span>según el caso u opcional</span></div>`:''}
+          <div><b class="num">${s.acuerdo==='no'?'1–3 años':(s.fNoIns?'6–12 meses':(fall>1||s.menores||s.acuerdo==='ausente'||s.fPrev||s.fDef?'4–8 meses':'2–6 meses'))}</b><span>duración probable</span></div>
+        </div>
+      </div>
+      ${alerts.length?`<div class="alerts">${alerts.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join('')}</div>`:''}
+      <div class="card">
+        <div class="eyebrow">Quién hereda</div>
+        <div class="tbl"><table>
+          <thead><tr><th>Heredero</th><th>Qué le corresponde</th><th class="r">Aprox.</th></tr></thead>
+          <tbody>${filas.map(f=>`<tr><td>${esc(f[0])}</td><td>${esc(f[1])}</td><td class="r">${f[2]==null?'—':fmt(r10(f[2]))}</td></tr>`).join('')}</tbody>
+        </table></div>
+        ${notas.map(n=>`<p class="muted small">${esc(n)}</p>`).join('')}
+      </div>
+      <div class="card">
+        <div class="eyebrow">Qué hay que pagar, en el orden en que se paga</div>
+        <div class="tbl"><table>
+          <thead><tr><th>Cuándo</th><th>Concepto</th><th class="r">Mínimo</th><th class="r">Máximo</th></tr></thead>
+          <tbody>${obl.map(filaC).join('')}
+          <tr class="sub"><td></td><td>Total obligatorio</td><td class="r">${fmt(r10(oLo))}</td><td class="r">${fmt(r10(oHi))}</td></tr>
+          ${opt.map(filaC).join('')}</tbody>
+        </table></div>
+        <p class="muted small">Notaría y Registro calculados con sus aranceles oficiales sobre el valor que has puesto; la diferencia entre mínimo y máximo es por el número de folios y copias. La plusvalía usa la ordenanza de Sevilla (26,53 %).</p>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Hoja de ruta, en orden</div>
+        <ol class="route">${st.map(x=>`<li><div><h3>${esc(x.t)}</h3><p>${esc(x.p)}</p>
+          <div class="meta"><span>Dónde: <b>${esc(x.d)}</b></span><span>Plazo: <b>${esc(x.pl)}</b></span><span>Coste: <b>${esc(x.c)}</b></span></div></div></li>`).join('')}</ol>
+      </div>`;
+  }
+
+  function isExample(){ const s=read(); return Object.keys(EJEMPLO).every(k=>String(s[k])===String(EJEMPLO[k])); }
+  function update(){ render(); $('exBadge').hidden=!isExample(); try{ localStorage.setItem('herencia-caso-v2', JSON.stringify(read())); }catch(e){} }
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('herencia-caso-v2')||'null'); }catch(e){}
+  load(Object.assign({}, EJEMPLO, saved||{}));
+  $('f').addEventListener('input', update);
+  $('f').addEventListener('change', update);
+  $('btnReset').addEventListener('click', ()=>{ load(EJEMPLO); update(); });
+  update();
+})();
+</script>
+
+<script>if(window.top!==window.self){var b=document.querySelector(".backbar");if(b)b.remove();}</script>
+</body>
+</html>

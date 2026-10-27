@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#082d74">
+<title>Guía de la VPO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera + regímenes + requisitos + comprobador "¿puedo pedir VPO?" + tres recorridos (conseguir nueva, comprar usada, vender) + desplegables */
+:root{
+  --bg:#F3F6F2; --surface:#FFFFFF; --ink:#151C16; --muted:#566259; --line:#D5DDD4;
+  --accent:#2C6B3B; --accent-soft:#E1EEE2; --stamp:#9C3D1E;
+  --warn:#8A5300; --warn-soft:#FBEFD8; --bad:#9E2F2A; --bad-soft:#F8E2DF; --ok:#2B663B; --ok-soft:#E1EFE4;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1410; --surface:#171E18; --ink:#E3EBE4; --muted:#9BAA9E; --line:#2A352C;
+  --accent:#86CC96; --accent-soft:#1C3121; --stamp:#E89A7C;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1410; --surface:#171E18; --ink:#E3EBE4; --muted:#9BAA9E; --line:#2A352C;
+  --accent:#86CC96; --accent-soft:#1C3121; --stamp:#E89A7C;
+  --warn:#E9B266; --warn-soft:#382A13; --bad:#F2897F; --bad-soft:#3B1E1B; --ok:#82CC95; --ok-soft:#1B3223; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:52px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.1rem,5vw,3.2rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,3vw,1.95rem)}
+h3{font-size:1.18rem}
+p{margin:0}
+a{color:var(--accent)}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:.86rem}
+.num{font-variant-numeric:tabular-nums}
+.sec{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:72ch}
+
+header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:36px;align-items:end;border-bottom:1px solid var(--line);padding-bottom:28px}
+header .lead{font-size:1.12rem;max-width:58ch;color:var(--muted);margin-top:14px}
+.news{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:8px}
+.stamp{align-self:flex-start;font-family:var(--mono);font-size:.74rem;font-weight:500;color:var(--stamp);border:1.5px solid var(--stamp);padding:2px 8px;border-radius:4px;transform:rotate(-2deg)}
+.news ul{margin:0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+
+.regs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.reg{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:8px}
+.reg .lim{font-family:var(--display);font-size:2rem;font-weight:600;line-height:1}
+.reg .lim small{font-family:var(--body);font-size:.85rem;font-weight:500;color:var(--muted)}
+.reg p{font-size:.9rem}
+.reg .eur{font-family:var(--mono);font-size:.82rem;color:var(--accent)}
+
+.reqs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.req{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px}
+.req .k{font-family:var(--mono);font-size:.82rem;color:var(--accent);padding-top:2px}
+.req h3{font-size:1.02rem;margin-bottom:3px}
+.req p{font-size:.88rem}
+
+.tool{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.86rem;font-weight:600}
+.help{font-size:.77rem;color:var(--muted);line-height:1.35}
+select,input[type=number],input[type=date]{min-height:42px;font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;font-variant-numeric:tabular-nums}
+select:focus-visible,input:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;line-height:1.35}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.grp{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.grp-t{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+.out{display:flex;flex-direction:column;gap:22px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.verdict{font-family:var(--display);font-size:1.7rem;font-weight:600;line-height:1.15}
+.verdict.ok{color:var(--ok)} .verdict.warn{color:var(--warn)} .verdict.bad{color:var(--bad)}
+.checks3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.c3{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+.c3 b{font-size:.95rem}
+.c3.ok{border-color:var(--ok);background:var(--ok-soft)} .c3.no{border-color:var(--bad);background:var(--bad-soft)} .c3.na{opacity:.6}
+.list{display:flex;flex-direction:column;gap:0}
+.list div{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.list div:last-child{border-bottom:none}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:5px}
+.dot.ok{background:var(--ok)} .dot.no{background:var(--bad)} .dot.warn{background:var(--warn)}
+.alerts{display:flex;flex-direction:column;gap:10px}
+.alert{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 8px 8px 0;font-size:.92rem}
+.alert.warn{border-color:var(--warn);background:var(--warn-soft)} .alert.bad{border-color:var(--bad);background:var(--bad-soft)}
+.alert b{display:block;margin-bottom:2px}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:inherit;font-weight:600;font-size:.92rem;padding:9px 16px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px}
+ol.route{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;counter-reset:paso}
+ol.route > li{counter-increment:paso;display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px;padding:16px 0;border-bottom:1px solid var(--line)}
+ol.route > li:last-child{border-bottom:none}
+ol.route > li::before{content:counter(paso);font-family:var(--display);font-size:1.2rem;font-weight:600;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center}
+ol.route h3{font-size:1.08rem;margin-bottom:3px}
+ol.route p{font-size:.93rem}
+ol.route ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:3px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:.8rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+
+.lib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 28px;align-items:start}
+.lib > div{display:flex;flex-direction:column;gap:12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details[open]{border-color:var(--accent)}
+summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:600;position:relative;line-height:1.35}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.dc{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:.94rem}
+.dc ul,.dc ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted);max-width:80ch}
+
+
+.calcs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.calc .src{font-size:.78rem;color:var(--muted)}
+.mem{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}
+.mem .n{font-family:var(--mono);font-size:.8rem;color:var(--muted);padding-bottom:10px}
+.mem button,.btn{font:inherit;font-size:.82rem;font-weight:600;background:none;border:1px solid var(--line);color:var(--ink);padding:8px 10px;border-radius:8px;cursor:pointer}
+.mem button:hover,.btn:hover{border-color:var(--accent);color:var(--accent)}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;padding:10px 18px}
+.btn.pri:hover{color:#fff;filter:brightness(1.08)}
+.btn.tog{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;padding:10px 14px;font-size:.9rem}
+.btn.tog .box{width:18px;height:18px;border:2px solid var(--line);border-radius:5px;display:grid;place-items:center;flex:none}
+.btn.tog[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.btn.tog[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.btn.tog[aria-pressed="true"] .box::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.pill.auto{background:var(--accent-soft);color:var(--accent)}
+.res[hidden]{display:none}
+select:disabled{opacity:.6}
+details.mini summary{font-size:.86rem;padding:10px 16px}
+.res{background:var(--bg);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.res .bigv{font-family:var(--display);font-size:2.2rem;font-weight:600;line-height:1}
+.res table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+.res td{padding:6px 0;border-bottom:1px solid var(--line)}
+.res td.r{white-space:nowrap;padding-left:10px;text-align:right;font-family:var(--mono)}
+.res tr.t td{font-weight:700;border-bottom:none;border-top:2px solid var(--ink)}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:900px){ .calcs{grid-template-columns:1fr} }
+@media (max-width:460px){ .mem{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .mem .n{grid-column:1/-1;padding:0} }
+@media (max-width:900px){ header{grid-template-columns:1fr;gap:20px} .regs,.reqs{grid-template-columns:1fr} .tool{grid-template-columns:1fr} .form{position:static;max-height:none} .lib{grid-template-columns:1fr} }
+@media (max-width:560px){ .checks3{grid-template-columns:1fr} }
+@media (max-width:420px){ .row2{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.ck{display:flex;flex-direction:column;gap:18px}
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ck-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;min-width:0}
+.ck-n{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.ck-item h3{font-size:1.02rem;margin:0 0 3px}
+.ck-item p{font-size:.88rem;margin:0}
+.ck-item a{font-size:.84rem;font-weight:600}
+.ck-item .here{font-size:.8rem;color:var(--muted)}
+.ck-docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.ck-docs ul{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+@media (max-width:900px){ .ck-grid{grid-template-columns:1fr} .ck-docs{grid-template-columns:1fr} }
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>.backbar{display:flex;margin-bottom:-28px}.backbar a{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;font-weight:700;color:#082d74;text-decoration:none;background:#fff;border:1px solid #e0e3f0;border-radius:999px;padding:7px 14px;box-shadow:0 1px 2px rgba(16,19,42,.05)}.backbar a:hover{border-color:#b9c2de}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .backbar a{background:#1b2030;color:#cfd8f5;border-color:#2c3348}}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="backbar"><a href="index.html">‹ Herramientas</a></div>
+
+<header>
+  <div>
+    <div class="eyebrow">Andalucía · Sevilla · octubre 2026</div>
+    <h1>Vivienda protegida, de principio a fin</h1>
+    <p class="lead">Quién puede tener una VPO, cómo se pide, qué pasa si ya tienes una casa o estás divorciándote, y cómo se compra o se vende una VPO de segunda mano.</p>
+  </div>
+  <div class="news">
+    <span class="stamp">NUEVA LEY · ENERO 2026</span>
+    <p class="small">La <b>Ley 5/2025 de Vivienda de Andalucía</b> está en vigor desde el 24 de enero de 2026:</p>
+    <ul>
+      <li>Se quita la prohibición de vender durante 10 años en las VPO nuevas. Las ya calificadas antes siguen con sus 10 años.</li>
+      <li>Toda venta necesita autorización de la Junta. Sin ella, la venta es nula.</li>
+      <li>Hay que vivir en ella: no puede estar vacía más de 3 meses al año. El uso turístico está prohibido (multas de hasta 120.000 €).</li>
+      <li>Las personas que vienen de una ruptura familiar son grupo preferente.</li>
+    </ul>
+  </div>
+</header>
+
+<section class="sec" aria-labelledby="t1">
+  <div class="sec-head">
+    <div class="eyebrow">Los tres tipos</div>
+    <h2 id="t1">Regímenes y límite de ingresos</h2>
+    <p class="muted">El límite se mide en veces el IPREM (8.400 € al año en 14 pagas en 2026). La Junta no mira los ingresos tal cual: los multiplica por unos <b>coeficientes correctores</b> (0,75 si son dos, 0,70 si son tres o más, 0,90 por cada grupo de especial protección y 0,86 por municipio, con un mínimo de 0,65). Por eso los ingresos reales que se admiten son más altos. Abajo, en euros de ingresos reales:</p>
+  </div>
+  <div class="regs">
+    <article class="reg"><span class="eyebrow">Régimen especial</span><span class="lim">3 <small>veces el IPREM</small></span><span class="eur">1 persona: 29.302 € · 2 o más: 38.769 €</span><p>Las más baratas. Para ingresos bajos.</p></article>
+    <article class="reg"><span class="eyebrow">Régimen general</span><span class="lim">5,5 <small>veces el IPREM</small></span><span class="eur">1 persona: 53.721 € · 2 o más: 71.077 €</span><p>Las más habituales.</p></article>
+    <article class="reg"><span class="eyebrow">Precio limitado</span><span class="lim">7 <small>veces el IPREM</small></span><span class="eur">1 persona: 68.372 € · 2 o más: 90.462 €</span><p>Precio más alto, para ingresos medios.</p></article>
+  </div>
+  <p class="small muted">Límites del Plan Vive 2020-2030. Euros = ingresos reales máximos con IPREM 8.400 €, coeficiente territorial 0,86 y sin grupos de especial protección. Para una persona sola de un grupo protegido (por ejemplo, menor de 35) el límite sube más. Calcúlalo abajo.</p>
+</section>
+
+<section class="sec" aria-labelledby="t2">
+  <div class="sec-head">
+    <div class="eyebrow">Requisitos</div>
+    <h2 id="t2">Lo que hay que cumplir</h2>
+  </div>
+  <div class="reqs">
+    <div class="req"><span class="k">01</span><div><h3>Inscribirse en el Registro</h3><p>En el Registro Municipal de Demandantes de Vivienda Protegida del municipio (en Sevilla, gestionado por EMVISESA). La inscripción dura 3 años y se renueva en los 3 meses anteriores.</p></div></div>
+    <div class="req"><span class="k">02</span><div><h3>No tener otra vivienda</h3><p>Ni libre ni protegida, en pleno dominio o con derecho de uso vitalicio. Hay excepciones por necesidad de vivienda, como un divorcio en que se pierde el uso.</p></div></div>
+    <div class="req"><span class="k">03</span><div><h3>No pasar del límite de ingresos</h3><p>Según el régimen: 3, 5,5 o 7 veces el IPREM, ponderado. Se miran los ingresos de toda la unidad familiar.</p></div></div>
+    <div class="req"><span class="k">04</span><div><h3>Vivir en ella</h3><p>Tiene que ser la residencia habitual y permanente. No se puede usar como segunda residencia ni alquilar por días.</p></div></div>
+    <div class="req"><span class="k">05</span><div><h3>Estar empadronado en Andalucía</h3><p>Lo pide la nueva ley, con excepciones. El padrón en el municipio puede dar preferencia en el sorteo.</p></div></div>
+    <div class="req"><span class="k">06</span><div><h3>Poder pagarla</h3><p>La ley busca que el pago no supere el 30 % de los ingresos de la familia. El banco mirará lo mismo para la hipoteca.</p></div></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="tc">
+  <div class="sec-head">
+    <div class="eyebrow">Calculadoras de la Junta</div>
+    <h2 id="tc">Ingresos en IPREM y precio máximo de venta</h2>
+    <p class="muted">Hacen el mismo cálculo que las calculadoras oficiales de la Junta de Andalucía: sus fórmulas, el módulo vigente y la lista oficial de municipios. Para un trámite, el dato que vale es el de la Junta.</p>
+  </div>
+  <div class="calcs">
+    <form class="calc" id="fi" onsubmit="return false" novalidate>
+      <h3>Cálculo de ingresos familiares corregidos (IPREM)</h3>
+      <div class="row2">
+        <div class="field"><label for="iProv">Provincia</label><select id="iProv" data-prov="iMun"></select></div>
+        <div class="field"><label for="iMun">Municipio</label><select id="iMun"></select></div>
+      </div>
+      <div class="field">
+        <label for="iAnio">Año de referencia de los ingresos</label>
+        <select id="iAnio">
+          <option value="">Seleccione…</option>
+          <option value="8400">2025 · IPREM 8.400,00 €</option>
+          <option value="8400">2024 · IPREM 8.400,00 €</option>
+          <option value="8400">2023 · IPREM 8.400,00 €</option>
+          <option value="8106.28">2022 · IPREM 8.106,28 €</option>
+          <option value="7908.60">2021 · IPREM 7.908,60 €</option>
+          <option value="7519.59">2020 · IPREM 7.519,59 €</option>
+        </select>
+        <span class="help">El último año con la declaración de la renta ya presentada.</span>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="iUF">Número de miembros de la unidad familiar</label>
+          <select id="iUF"><option value="">Seleccione…</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option value="6">6 o más</option></select>
+        </div>
+        <div class="field">
+          <label for="iGr">Número de grupos de especial protección</label>
+          <select id="iGr"><option value="0">0</option><option>1</option><option>2</option><option>3</option><option value="4">4 o más</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="iBase">Importe de la base imponible (€)</label>
+        <input type="number" id="iBase" min="0" step="0.01" inputmode="decimal" placeholder="Ej.: 28000">
+        <span class="help">Suma de la base imponible general (casilla 0435) y del ahorro (casilla 0460) de todos los miembros que vivirán en la vivienda.</span>
+      </div>
+      <details class="mini"><summary>¿Qué cuenta como grupo de especial protección?</summary>
+        <p class="small" style="padding:0 16px 14px">Menores de 35 años, mayores de 65, familias numerosas, familias monoparentales, personas con discapacidad o dependencia, víctimas de violencia de género o de terrorismo, personas que vienen de una ruptura familiar, desahuciadas, en riesgo de exclusión o emigrantes retornados. Se cuenta cada <b>grupo distinto</b> al que pertenezca algún miembro: si los dos son menores de 35, es 1 grupo. Cada grupo multiplica por 0,90.</p>
+      </details>
+      <div class="acts"><button type="button" class="btn pri" id="iCalc">Calcular</button><button type="button" class="btn" id="iClr">Limpiar filtros</button></div>
+      <div class="res" id="iRes" aria-live="polite" hidden></div>
+      <p class="src">Fórmula (Plan Vive, disposición adicional 1ª, modificada por el Decreto-ley 3/2024): base imponible × coeficiente ÷ IPREM anual de 14 pagas. Coeficiente: miembros (1 → 1; 2 → 0,75; 3 o más → 0,70) × 0,90 por grupo × 0,86 territorial; nunca baja de 0,65 ni sube de 1. Límites: 3 (especial), 5,5 (general), 7 (precio limitado). Cada promoción puede fijar uno más bajo.</p>
+    </form>
+
+    <form class="calc" id="fp" onsubmit="return false" novalidate>
+      <h3>Cálculo de precio máximo de vivienda protegida</h3>
+      <div class="row2">
+        <div class="field"><label for="pProv">Provincia</label><select id="pProv" data-prov="pMun"></select></div>
+        <div class="field"><label for="pMun">Municipio</label><select id="pMun"></select></div>
+      </div>
+      <div class="field">
+        <label for="pFec">Fecha Calificación</label>
+        <input type="date" id="pFec" max="2030-12-31">
+        <span class="help">Fecha de la calificación definitiva (en la cédula o en la escritura). Con 15 años o más se calcula automáticamente con precio limitado (art. 27.2 del Reglamento).</span>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="pUso">Uso de la vivienda</label>
+          <select id="pUso"><option value="">Seleccione…</option><option value="venta">Venta</option><option value="alq">Alquiler</option><option value="aoc">Alquiler con opción a compra</option></select>
+        </div>
+        <div class="field">
+          <label for="pReg">Régimen</label>
+          <select id="pReg"><option value="">Seleccione…</option><option value="1.5">Régimen especial</option><option value="1.7">Régimen general</option><option value="2.0">Precio limitado</option></select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="pSup">Superficie útil vivienda (m²)</label><input type="number" id="pSup" min="0" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label for="pGar">Superficie útil garaje vinculado (m²)</label><input type="number" id="pGar" min="0" step="0.01" inputmode="decimal"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="pTra">Superficie útil trastero vinculado (m²)</label><input type="number" id="pTra" min="0" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label for="pOtr">Superficie útil otros anejos vinculado (m²)</label><input type="number" id="pOtr" min="0" step="0.01" inputmode="decimal"></div>
+      </div>
+      <div class="field">
+        <button type="button" class="btn tog" id="pMej" aria-pressed="false"><span class="box" aria-hidden="true"></span>Aplicar 10 % de mejoras</button>
+        <span class="help">Solo mejoras justificadas que aumentan el valor (no reparaciones ni mantenimiento). Hay que acreditarlas ante la Junta.</span>
+      </div>
+      <div class="acts"><button type="button" class="btn pri" id="pCalc">Calcular</button><button type="button" class="btn" id="pClr">Limpiar filtros</button></div>
+      <div class="res" id="pRes" aria-live="polite" hidden></div>
+      <p class="src">Fórmula: módulo básico 920,29 €/m² × coeficiente territorial (Grupo 1: 1,5 · Grupo 2: 1,3, según el municipio) × coeficiente del régimen (1,5 · 1,7 · 2,0) × m² útiles. Anejos vinculados (garaje, trastero y otros) al 60 % del precio del m². Alquiler: 4,5 % anual del precio; con opción a compra, 5 %. Plan Vive (Decreto 91/2020) y Anexo V de 2025.</p>
+    </form>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t3">
+  <div class="sec-head">
+    <div class="eyebrow">Comprobador</div>
+    <h2 id="t3">¿Puedo pedir una VPO?</h2>
+  </div>
+  <div class="tool">
+    <form class="form" id="f" onsubmit="return false">
+      <div class="row2">
+        <div class="field"><label for="ing">Ingresos al año</label><input type="number" id="ing" min="0" step="500" inputmode="numeric"><span class="help">Suma de bases imponibles general y del ahorro de todos. Para el detalle, usa la calculadora de arriba.</span></div>
+        <div class="field"><label for="miem">Personas</label><input type="number" id="miem" min="1" max="12" step="1" inputmode="numeric"></div>
+      </div>
+      <div class="grp">
+        <div class="grp-t">Vivienda</div>
+        <div class="field">
+          <label for="viv">¿Eres dueño de alguna vivienda?</label>
+          <select id="viv">
+            <option value="no">No</option>
+            <option value="div">Sí, la de mi matrimonio o pareja, y me estoy separando</option>
+            <option value="si">Sí, otra vivienda</option>
+            <option value="her">Solo una parte heredada</option>
+          </select>
+        </div>
+        <div class="field" id="wDiv">
+          <label for="div">¿En qué punto está el divorcio?</label>
+          <select id="div">
+            <option value="nada">Separados de hecho, sin papeles</option>
+            <option value="dem">Demanda presentada, sin resolución</option>
+            <option value="med">Auto de medidas provisionales: el uso es del otro</option>
+            <option value="sen">Sentencia o convenio aprobado: el uso es del otro</option>
+            <option value="usoyo">Sentencia o convenio: el uso es mío</option>
+            <option value="ced">Ya cedí mi parte al otro (o se vendió)</option>
+          </select>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="grp-t">Otros</div>
+        <label class="check"><input type="checkbox" id="grp"> Algún miembro es menor de 35 o de otro grupo de especial protección</label>
+        <label class="check"><input type="checkbox" id="pad"> Estoy empadronado en Andalucía</label>
+        <label class="check"><input type="checkbox" id="ins"> Ya estoy inscrito en el Registro de Demandantes</label>
+      </div>
+    </form>
+    <div class="out" id="out" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t4">
+  <div class="sec-head">
+    <div class="eyebrow">Paso a paso</div>
+    <h2 id="t4">Conseguir, comprar o vender una VPO</h2>
+  </div>
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab" role="tab" aria-selected="true" data-p="p1" id="tb1">Conseguir una nueva</button>
+    <button type="button" class="tab" role="tab" aria-selected="false" data-p="p2" id="tb2">Comprar una de segunda mano</button>
+    <button type="button" class="tab" role="tab" aria-selected="false" data-p="p3" id="tb3">Vender o alquilar la mía</button>
+  </div>
+
+  <div class="panel" id="p1" role="tabpanel" aria-labelledby="tb1">
+    <ol class="route">
+      <li><div><h3>Inscríbete en el Registro de Demandantes</h3><p>En tu municipio y hasta en otros dos donde quieras vivir. Eliges si buscas compra, alquiler o alquiler con opción a compra, y cuántos dormitorios.</p>
+        <ul><li>DNI de todos los miembros</li><li>Renta del último año (o certificado de Hacienda) de todos</li><li>Empadronamiento</li><li>Si aplica: libro de familia, sentencia o convenio de divorcio, discapacidad, familia numerosa</li></ul>
+        <div class="meta"><span>Dónde: <b>Registro municipal (Sevilla: EMVISESA)</b></span><span>Coste: <b>Gratis</b></span><span>Dura: <b>3 años</b></span></div></div></li>
+      <li><div><h3>Espera a una promoción</h3><p>Cuando un promotor tiene viviendas, pide al Registro una lista de candidatos. El Ayuntamiento la hace por sorteo o baremo, con cupos para jóvenes, mayores, familias numerosas, discapacidad, víctimas de violencia y personas que vienen de una ruptura familiar.</p>
+        <div class="meta"><span>Dónde: <b>Registro y promotor</b></span><span>Plazo: <b>Variable</b></span></div></div></li>
+      <li><div><h3>Te notifican y confirmas</h3><p>El promotor te llama. Renunciar dos veces sin motivo te puede dar de baja del Registro.</p>
+        <div class="meta"><span>Dónde: <b>Promotor</b></span></div></div></li>
+      <li><div><h3>Firma el contrato y que lo visen</h3><p>El contrato de compraventa o alquiler lo visa la Delegación Territorial de la Junta, que comprueba que cumples los requisitos.</p>
+        <div class="meta"><span>Dónde: <b>Delegación Territorial de Fomento y Vivienda</b></span><span>Impuesto: <b>IVA 4 % en régimen especial, 10 % en el resto</b></span></div></div></li>
+      <li><div><h3>Escritura y a vivir</h3><p>El promotor tiene 6 meses desde la calificación definitiva para firmar la escritura. Desde entonces debe ser tu residencia habitual.</p>
+        <div class="meta"><span>Dónde: <b>Notaría</b></span></div></div></li>
+    </ol>
+  </div>
+
+  <div class="panel" id="p2" role="tabpanel" aria-labelledby="tb2" hidden>
+    <ol class="route">
+      <li><div><h3>Comprueba que es VPO y su expediente</h3><p>Pide la nota simple: debe salir la calificación y el número de expediente. Si no aparece, pide al Registro una nota más amplia o mira la escritura original. Revisa también el tipo de VPO, su antigüedad y si hay derecho de tanteo a favor de la Junta o, en Sevilla, de EMVISESA en promociones municipales.</p>
+        <div class="meta"><span>Dónde: <b>Registro de la Propiedad</b></span><span>Coste: <b>≈ 9 €</b></span></div></div></li>
+      <li><div><h3>Calcula el precio máximo</h3><p>Con la <a href="https://www.juntadeandalucia.es/organismos/viviendajuventudyordenaciondelterritorio/areas/vivienda-rehabilitacion/vivienda-protegida/calculadora-precio-maximo-vp/" target="_blank" rel="noopener">calculadora de la Junta</a>: fecha de calificación, régimen, municipio y metros útiles de vivienda, garaje y trastero. No se puede pagar más, ni en "dinero aparte": el sobreprecio es nulo y sancionable.</p>
+        <div class="meta"><span>Dónde: <b>Web de la Junta</b></span><span>Coste: <b>Gratis</b></span></div></div></li>
+      <li><div><h3>Comprueba que el comprador cumple</h3><p>Que no tiene otra vivienda, que no pasa del límite de ingresos de ese régimen y que va a vivir en ella. Si va con hipoteca, que el banco la apruebe con el precio máximo.</p></div></li>
+      <li><div><h3>Pide la autorización de la Junta</h3><p>Vendedor y comprador presentan cada uno su solicitud (procedimiento 865: Anexo IA el que vende, Anexo IB el que compra). Rellenadlos enteros: las preguntas en blanco pueden invalidar el trámite.</p>
+        <ul><li>Nota simple y escritura del vendedor</li><li>DNI e ingresos del comprador</li><li>Declaración de no tener otra vivienda</li><li>Precio pactado (no más del máximo)</li></ul>
+        <div class="meta"><span>Dónde: <b>Delegación Territorial (online o presencial)</b></span><span>Plazo: <b>≈ 1 mes</b></span></div></div></li>
+      <li><div><h3>Tanteo y retracto de la Junta</h3><p>La Junta puede quedarse la vivienda por el mismo precio (tanteo), normalmente si el precio es anormalmente bajo. Tiene un plazo de unos 60 días. Si se vende sin comunicarlo o con otras condiciones, puede anular la venta y quedársela (retracto).</p></div></li>
+      <li><div><h3>Firma con la autorización</h3><p>El notario no firma sin la autorización. La escritura recoge el expediente, el periodo de protección y la obligación de vivir en ella.</p>
+        <div class="meta"><span>Dónde: <b>Notaría</b></span><span>Impuesto: <b>ITP 7 %; 6 % vivienda habitual hasta 150.000 €; 3,5 % menores de 35 y otros casos</b></span></div></div></li>
+    </ol>
+  </div>
+
+  <div class="panel" id="p3" role="tabpanel" aria-labelledby="tb3" hidden>
+    <ol class="route">
+      <li><div><h3>Mira cuándo se calificó</h3><p><b>Calificada antes del 24 de enero de 2026:</b> sigue la prohibición de vender en los 10 años desde la escritura, salvo excepciones: cambio de trabajo, familia más grande, mayor de 65, víctima de violencia o terrorismo, fallecimiento, discapacidad, <b>separación o divorcio</b>, venta al otro copropietario o reparto de herencia. <b>Calificada después:</b> no hay 10 años, pero sí autorización siempre.</p></div></li>
+      <li><div><h3>Devuelve las ayudas si toca</h3><p>Si recibiste ayudas para comprarla y no ha pasado su plazo, primero se pide su liquidación (Anexo III) y se devuelven con intereses.</p>
+        <div class="meta"><span>Dónde: <b>Delegación Territorial</b></span></div></div></li>
+      <li><div><h3>¿Pedir la descalificación?</h3><p>Si la vivienda ya cumplió su plazo de protección, o la normativa lo permite, se puede pedir la descalificación a la Delegación Territorial: pasa a ser libre y se vende sin precio máximo ni autorización. Conviene comprobarlo antes de fijar el precio.</p></div></li>
+      <li><div><h3>Precio máximo y anuncio</h3><p>El anuncio debe incluir el expediente de calificación y un precio que no pase del máximo. Las mejoras justificadas pueden subirlo un poco.</p></div></li>
+      <li><div><h3>Encuentra un comprador que cumpla</h3><p>Sin otra vivienda, dentro del límite de ingresos y para vivir. Ver la pestaña de comprar.</p></div></li>
+      <li><div><h3>Autorización, tanteo y firma</h3><p>Igual que al comprar: solicitud de los dos, autorización de la Junta, posible tanteo, y escritura con la autorización. Sin ella, la venta es nula y no se inscribe.</p></div></li>
+      <li><div><h3>¿Alquilarla?</h3><p>Se puede con declaración responsable de propietario e inquilino y justificando la causa (trabajo, enfermedad u otra causa justa). La renta máxima anual es el 4,5 % del precio máximo. Nunca alquiler turístico.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="t5">
+  <div class="sec-head">
+    <div class="eyebrow">Dudas frecuentes</div>
+    <h2 id="t5">Lo que siempre preguntan</h2>
+  </div>
+  <div class="lib">
+    <div>
+      <details>
+        <summary>Divorcio en trámite: ¿puedo pedir VPO si tengo media casa?</summary>
+        <div class="dc">
+          <p>La regla es no tener otra vivienda. La excepción por divorcio es para quien sigue siendo dueño pero ha perdido el uso de la casa por una resolución judicial.</p>
+          <ul>
+            <li><b>Sin papeles o solo con la demanda:</b> normalmente aún no se cumple. Algunos registros dejan inscribirse y piden la sentencia antes de adjudicar.</li>
+            <li><b>Auto de medidas provisionales</b> que da el uso al otro: suele aceptarse para acreditar la necesidad de vivienda.</li>
+            <li><b>Sentencia o convenio</b> con el uso para el otro: es la excepción clásica.</li>
+            <li><b>Si el uso es tuyo</b>, no se cumple: tienes dónde vivir.</li>
+            <li><b>Si cedes tu parte</b> (extinción de condominio o liquidación), dejas de ser dueño y no necesitas excepción.</li>
+          </ul>
+          <p>Cada registro municipal puede pedir papeles distintos. Llama antes. Todo sobre la casa en el divorcio, en <a href="divorcio.html">Divorcio y Vivienda</a>.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Tengo una VPO y me divorcio</summary>
+        <div class="dc">
+          <p>Adjudicar la VPO a uno de los dos en el divorcio está permitido: es una de las excepciones a los 10 años y una transmisión entre copropietarios. Se comunica a la Junta con la sentencia o escritura de divorcio y la adjudicación. El que se la queda debe vivir en ella.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Heredar una VPO</summary>
+        <div class="dc">
+          <p>Se puede heredar aunque el heredero no cumpla los requisitos. El notario comunica la herencia a la Junta. Pero si el heredero quiere venderla, alquilarla o cederla, se aplican las mismas reglas: autorización, precio máximo y comprador que cumpla.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Tener una vivienda heredada en parte</summary>
+        <div class="dc">
+          <p>Ser dueño de una parte pequeña de una vivienda heredada (por ejemplo, un 25 % con hermanos) no es tener "pleno dominio" de una vivienda. Muchos registros lo admiten, pero conviene preguntarlo. Si la tienes entera, no.</p>
+        </div>
+      </details>
+    </div>
+    <div>
+      <details>
+        <summary>¿Cómo sé si una vivienda es VPO?</summary>
+        <div class="dc">
+          <ul>
+            <li>En la nota simple aparece la calificación, el régimen y el expediente.</li>
+            <li>En la escritura de compra original.</li>
+            <li>En la Delegación Territorial, con la dirección.</li>
+          </ul>
+          <p>Los garajes y trasteros vinculados a la vivienda en el Registro tienen la misma protección.</p>
+        </div>
+      </details>
+      <details>
+        <summary>VPO antiguas: ¿ya son libres?</summary>
+        <div class="dc">
+          <p>La protección dura un tiempo que depende del plan con que se calificó. Muchas VPO antiguas de promoción privada ya han cumplido su plazo (por ejemplo, 30 años) y son libres, aunque el Registro siga diciendo VPO. La nota marginal caduca al acabar el plazo. Para estar seguros, pedid a la Delegación Territorial un certificado o la descalificación.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Vacía, alquilada o turística: multas</summary>
+        <div class="dc">
+          <ul>
+            <li>No puede estar sin habitar más de 3 meses al año. Se mira el padrón y los consumos de agua y luz.</li>
+            <li>Uso turístico prohibido, ni entera ni por habitaciones.</li>
+            <li>Multas: leves hasta 3.000 €, graves hasta 25.000 €, muy graves hasta 120.000 €, más devolución de ayudas.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>Hipoteca para una VPO</summary>
+        <div class="dc">
+          <p>El banco la tasa con el precio máximo legal, no con el de mercado. Hay que contar con la entrada y los gastos. Los menores de 40 años en Andalucía pueden usar el aval de la Junta para financiar hasta el 100 %, si cumplen sus requisitos.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="ck" aria-labelledby="ckT">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:70ch">
+    <div class="eyebrow">Antes de vender</div>
+    <h2 id="ckT">Los 6 puntos que se revisan antes de poner una casa a la venta</h2>
+    <p class="muted">Es el informe jurídico que se hace antes de publicar una vivienda. Si uno falla, se resuelve antes de firmar arras, no en la notaría.</p>
+  </div>
+  <div class="ck-grid">
+    <div class="ck-item"><span class="ck-n">1</span><div><h3>Propietarios</h3><p>Los que firman tienen que ser los mismos que salen en la nota simple, todos y con DNI. Si falta una herencia o un divorcio por resolver, se hace primero.</p><a href="guia-herencia.html">Guía de la Herencia →</a> </div></div>
+    <div class="ck-item"><span class="ck-n">2</span><div><h3>VPO</h3><p>Si es protegida: tipo, antigüedad, precio máximo y autorización de la Junta. Y si hay derecho de tanteo (de la Junta o, en Sevilla, de EMVISESA). A veces conviene pedir la descalificación.</p><span class="here">Lo explica esta web.</span></div></div>
+    <div class="ck-item"><span class="ck-n">3</span><div><h3>Cargas</h3><p>Hipotecas, embargos o condiciones resolutorias que salgan en la nota simple. Se cancelan antes o en la misma firma, con el dinero de la venta.</p></div></div>
+    <div class="ck-item"><span class="ck-n">4</span><div><h3>Superficie</h3><p>Que coincidan los metros del Catastro y de la nota simple, y que la casa esté declarada como es (sin plantas ni ampliaciones fuera del Registro).</p><a href="regularizar.html">Regularizar la Vivienda →</a></div></div>
+    <div class="ck-item"><span class="ck-n">5</span><div><h3>Fiscalidad</h3><p>Fecha y precio de compra, IRPF que pagará el vendedor (o si puede reinvertir) y plusvalía municipal.</p><a href="reinversion.html">Reinversión IRPF →</a></div></div>
+    <div class="ck-item"><span class="ck-n">6</span><div><h3>Situación familiar</h3><p>Divorcios, separaciones o viviendas en las que el otro tiene el uso: condicionan quién firma y qué impuestos hay.</p><a href="divorcio.html">Divorcio y Vivienda →</a></div></div>
+  </div>
+  <div class="ck-docs">
+    <div><h3>Papeles que se piden al vendedor</h3><ul>
+      <li>Escritura de la vivienda</li><li>DNI de todos los propietarios, con teléfono y correo</li><li>Último recibo del IBI</li><li>Último recibo de comunidad</li><li>Certificado energético (si no lo tiene, se encarga)</li><li>Antes de firmar: certificado de la comunidad de estar al corriente, estar al día del IBI y certificado de deuda del banco si hay hipoteca</li>
+    </ul></div>
+    <div><h3>En la firma y después</h3><ul>
+      <li>Antes de la notaría se entrega a cada parte la liquidación: lo que cobra o paga cada uno</li><li>El IBI del año se reparte entre vendedor y comprador en la propia notaría, para no reclamarlo después</li><li>Las cargas se cancelan con el dinero de la venta</li><li>Después: plusvalía municipal, cambio de luz, agua, comunidad y vado, y entrega de llaves</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Guía orientativa</b> basada en la Ley 5/2025 de Vivienda de Andalucía, el Reglamento de Viviendas Protegidas, el Plan Vive en Andalucía 2020-2030 y la información de la Junta de Andalucía, a octubre de 2026. La ley es nueva y su reglamento puede cambiar detalles: confirma cada caso con tu Registro Municipal de Demandantes o la Delegación Territorial.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const fmt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €';
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ===== Datos: municipios de Andalucía (INE) · 1 = Grupo 1, 2 = Grupo 2 (Anexo V) =====
+  const MUNIS={"Almería":[["Abla",2],["Abrucena",2],["Adra",2],["Albanchez",2],["Alboloduy",2],["Albox",2],["Alcolea",2],["Alcóntar",2],["Alcudia de Monteagud",2],["Alhabia",2],["Alhama de Almería",2],["Alicún",2],["Almería",1],["Almócita",2],["Alsodux",2],["Antas",2],["Arboleas",2],["Armuña de Almanzora",2],["Bacares",2],["Balanegra",2],["Bayárcal",2],["Bayarque",2],["Bédar",2],["Beires",2],["Benahadux",2],["Benitagla",2],["Benizalón",2],["Bentarique",2],["Berja",2],["Canjáyar",2],["Cantoria",2],["Carboneras",2],["Castro de Filabres",2],["Chercos",2],["Chirivel",2],["Cóbdar",2],["Cuevas del Almanzora",2],["Dalías",2],["El Ejido",1],["Enix",2],["Felix",2],["Fiñana",2],["Fines",2],["Fondón",2],["Gádor",2],["Garrucha",2],["Gérgal",2],["Huécija",2],["Huércal de Almería",2],["Huércal-Overa",2],["Íllar",2],["Instinción",2],["La Mojonera",2],["Laroya",2],["Las Tres Villas",2],["Laujar de Andarax",2],["Líjar",2],["Los Gallardos",2],["Lubrín",2],["Lucainena de las Torres",2],["Lúcar",2],["Macael",2],["María",2],["Mojácar",1],["Nacimiento",2],["Níjar",2],["Ohanes",2],["Olula de Castro",2],["Olula del Río",2],["Oria",2],["Padules",2],["Partaloa",2],["Paterna del Río",2],["Pechina",2],["Pulpí",2],["Purchena",2],["Rágol",2],["Rioja",2],["Roquetas de Mar",1],["Santa Cruz de Marchena",2],["Santa Fe de Mondújar",2],["Senés",2],["Serón",2],["Sierro",2],["Somontín",2],["Sorbas",2],["Suflí",2],["Tabernas",2],["Taberno",2],["Tahal",2],["Terque",2],["Tíjola",2],["Turre",2],["Turrillas",2],["Uleila del Campo",2],["Urrácal",2],["Velefique",2],["Vélez-Blanco",2],["Vélez-Rubio",2],["Vera",2],["Viator",2],["Vícar",2],["Zurgena",2]],"Cádiz":[["Alcalá de los Gazules",2],["Alcalá del Valle",2],["Algar",2],["Algeciras",1],["Algodonales",2],["Arcos de la Frontera",2],["Barbate",2],["Benalup-Casas Viejas",2],["Benaocaz",2],["Bornos",2],["Cádiz",1],["Castellar de la Frontera",2],["Chiclana de la Frontera",1],["Chipiona",2],["Conil de la Frontera",2],["El Bosque",2],["El Gastor",2],["El Puerto de Santa María",1],["Espera",2],["Grazalema",2],["Jerez de la Frontera",1],["Jimena de la Frontera",2],["La Línea de la Concepción",1],["Los Barrios",1],["Medina Sidonia",2],["Olvera",2],["Paterna de Rivera",2],["Prado del Rey",2],["Puerto Real",1],["Puerto Serrano",2],["Rota",1],["San Fernando",1],["San José del Valle",2],["San Martín del Tesorillo",2],["San Roque",1],["Sanlúcar de Barrameda",2],["Setenil de las Bodegas",2],["Tarifa",1],["Torre Alháquime",2],["Trebujena",2],["Ubrique",2],["Vejer de la Frontera",2],["Villaluenga del Rosario",2],["Villamartín",2],["Zahara",2]],"Córdoba":[["Adamuz",2],["Aguilar de la Frontera",2],["Alcaracejos",2],["Almedinilla",2],["Almodóvar del Río",2],["Añora",2],["Baena",2],["Belalcázar",2],["Belmez",2],["Benamejí",2],["Bujalance",2],["Cabra",2],["Cañete de las Torres",2],["Carcabuey",2],["Cardeña",2],["Castro del Río",2],["Conquista",2],["Córdoba",1],["Doña Mencía",2],["Dos Torres",2],["El Carpio",2],["El Guijo",2],["El Viso",2],["Encinas Reales",2],["Espejo",2],["Espiel",2],["Fernán-Núñez",2],["Fuente Carreteros",2],["Fuente la Lancha",2],["Fuente Obejuna",2],["Fuente Palmera",2],["Fuente-Tójar",2],["Guadalcázar",2],["Hinojosa del Duque",2],["Hornachuelos",2],["Iznájar",2],["La Carlota",2],["La Granjuela",2],["La Guijarrosa",2],["La Rambla",2],["La Victoria",2],["Los Blázquez",2],["Lucena",2],["Luque",2],["Montalbán de Córdoba",2],["Montemayor",2],["Montilla",2],["Montoro",2],["Monturque",2],["Moriles",2],["Nueva Carteya",2],["Obejo",2],["Palenciana",2],["Palma del Río",2],["Pedro Abad",2],["Pedroche",2],["Peñarroya-Pueblonuevo",2],["Posadas",2],["Pozoblanco",2],["Priego de Córdoba",2],["Puente Genil",2],["Rute",2],["San Sebastián de los Ballesteros",2],["Santa Eufemia",2],["Santaella",2],["Torrecampo",2],["Valenzuela",2],["Valsequillo",2],["Villa del Río",2],["Villafranca de Córdoba",2],["Villaharta",2],["Villanueva de Córdoba",2],["Villanueva del Duque",2],["Villanueva del Rey",2],["Villaralto",2],["Villaviciosa de Córdoba",2],["Zuheros",2]],"Granada":[["Agrón",2],["Alamedilla",2],["Albolote",1],["Albondón",2],["Albuñán",2],["Albuñol",2],["Albuñuelas",2],["Aldeire",2],["Alfacar",2],["Algarinejo",2],["Alhama de Granada",2],["Alhendín",1],["Alicún de Ortega",2],["Almegíjar",2],["Almuñécar",1],["Alpujarra de la Sierra",2],["Alquife",2],["Arenas del Rey",2],["Armilla",1],["Atarfe",1],["Baza",2],["Beas de Granada",2],["Beas de Guadix",2],["Benalúa",2],["Benalúa de las Villas",2],["Benamaurel",2],["Bérchules",2],["Bubión",2],["Busquístar",2],["Cacín",2],["Cádiar",2],["Cájar",1],["Calicasas",2],["Campotéjar",2],["Cáñar",2],["Caniles",2],["Capileira",2],["Carataunas",2],["Cástaras",2],["Castilléjar",2],["Castril",2],["Cenes de la Vega",1],["Chauchina",2],["Chimeneas",2],["Churriana de la Vega",1],["Cijuela",2],["Cogollos de Guadix",2],["Cogollos de la Vega",2],["Colomera",2],["Cortes de Baza",2],["Cortes y Graena",2],["Cuevas del Campo",2],["Cúllar",2],["Cúllar Vega",2],["Darro",2],["Dehesas de Guadix",2],["Dehesas Viejas",2],["Deifontes",2],["Diezma",2],["Dílar",2],["Dólar",2],["Domingo Pérez de Granada",2],["Dúdar",2],["Dúrcal",2],["El Pinar",2],["El Valle",2],["Escúzar",2],["Ferreira",2],["Fonelas",2],["Fornes",2],["Freila",2],["Fuente Vaqueros",2],["Galera",2],["Gobernador",2],["Gójar",2],["Gor",2],["Gorafe",2],["Granada",1],["Guadahortuna",2],["Guadix",2],["Gualchos",2],["Güéjar Sierra",2],["Güevéjar",2],["Huélago",2],["Huéneja",2],["Huéscar",2],["Huétor de Santillán",2],["Huétor Tájar",2],["Huétor Vega",1],["Íllora",2],["Ítrabo",2],["Iznalloz",2],["Játar",2],["Jayena",2],["Jérez del Marquesado",2],["Jete",2],["Jun",1],["Juviles",2],["La Calahorra",2],["La Malahá",2],["La Peza",2],["La Taha",2],["La Zubia",1],["Láchar",2],["Lanjarón",2],["Lanteira",2],["Las Gabias",2],["Lecrín",2],["Lentegí",2],["Lobras",2],["Loja",2],["Los Guájares",2],["Lugros",2],["Lújar",2],["Maracena",1],["Marchal",2],["Moclín",2],["Molvízar",2],["Monachil",2],["Montefrío",2],["Montejícar",2],["Montillana",2],["Moraleda de Zafayona",2],["Morelábor",2],["Motril",1],["Murtas",2],["Nevada",2],["Nigüelas",2],["Nívar",2],["Ogíjares",1],["Orce",2],["Órgiva",2],["Otívar",2],["Padul",2],["Pampaneira",2],["Pedro Martínez",2],["Peligros",1],["Píñar",2],["Pinos Genil",2],["Pinos Puente",2],["Polícar",2],["Polopos",2],["Pórtugos",2],["Puebla de Don Fadrique",2],["Pulianas",1],["Purullena",2],["Quéntar",2],["Rubite",2],["Salar",2],["Salobreña",2],["Santa Cruz del Comercio",2],["Santa Fe",1],["Soportújar",2],["Sorvilán",2],["Torre-Cardela",2],["Torrenueva Costa",2],["Torvizcón",2],["Trevélez",2],["Turón",2],["Ugíjar",2],["Valderrubio",2],["Valle del Zalabí",2],["Válor",2],["Vegas del Genil",2],["Vélez de Benaudalla",2],["Ventas de Huelma",2],["Villa de Otura",2],["Villamena",2],["Villanueva de las Torres",2],["Villanueva Mesía",2],["Víznar",2],["Zafarraya",2],["Zagra",2],["Zújar",2]],"Huelva":[["Alájar",2],["Aljaraque",1],["Almonaster la Real",2],["Almonte",2],["Alosno",2],["Aracena",2],["Aroche",2],["Arroyomolinos de León",2],["Ayamonte",2],["Beas",2],["Berrocal",2],["Bollullos Par del Condado",2],["Bonares",2],["Cabezas Rubias",2],["Cala",2],["Calañas",2],["Campofrío",2],["Cañaveral de León",2],["Cartaya",2],["Castaño del Robledo",2],["Chucena",2],["Corteconcepción",2],["Cortegana",2],["Cortelazor",2],["Cumbres de Enmedio",2],["Cumbres de San Bartolomé",2],["Cumbres Mayores",2],["El Almendro",2],["El Campillo",2],["El Cerro de Andévalo",2],["El Granado",2],["Encinasola",2],["Escacena del Campo",2],["Fuenteheridos",2],["Galaroza",2],["Gibraleón",2],["Higuera de la Sierra",2],["Hinojales",2],["Hinojos",2],["Huelva",1],["Isla Cristina",1],["Jabugo",2],["La Granada de Río-Tinto",2],["La Nava",2],["La Palma del Condado",2],["La Zarza-Perrunal",2],["Lepe",2],["Linares de la Sierra",2],["Los Marines",2],["Lucena del Puerto",2],["Manzanilla",2],["Minas de Riotinto",2],["Moguer",1],["Nerva",2],["Niebla",2],["Palos de la Frontera",1],["Paterna del Campo",2],["Paymogo",2],["Puebla de Guzmán",2],["Puerto Moral",2],["Punta Umbría",2],["Rociana del Condado",2],["Rosal de la Frontera",2],["San Bartolomé de la Torre",2],["San Juan del Puerto",1],["San Silvestre de Guzmán",2],["Sanlúcar de Guadiana",2],["Santa Ana la Real",2],["Santa Bárbara de Casa",2],["Santa Olalla del Cala",2],["Trigueros",2],["Valdelarco",2],["Valverde del Camino",2],["Villablanca",2],["Villalba del Alcor",2],["Villanueva de las Cruces",2],["Villanueva de los Castillejos",2],["Villarrasa",2],["Zalamea la Real",2],["Zufre",2]],"Jaén":[["Albanchez de Mágina",2],["Alcalá la Real",2],["Alcaudete",2],["Aldeaquemada",2],["Andújar",2],["Arjona",2],["Arjonilla",2],["Arquillos",2],["Arroyo del Ojanco",2],["Baeza",1],["Bailén",2],["Baños de la Encina",2],["Beas de Segura",2],["Bedmar y Garcíez",2],["Begíjar",2],["Bélmez de la Moraleda",2],["Benatae",2],["Cabra del Santo Cristo",2],["Cambil",2],["Campillo de Arenas",2],["Canena",2],["Carboneros",2],["Cárcheles",2],["Castellar",2],["Castillo de Locubín",2],["Cazalilla",2],["Cazorla",1],["Chiclana de Segura",2],["Chilluévar",2],["Escañuela",2],["Espeluy",2],["Frailes",2],["Fuensanta de Martos",2],["Fuerte del Rey",2],["Génave",2],["Guarromán",2],["Higuera de Calatrava",2],["Hinojares",2],["Hornos",2],["Huelma",2],["Huesa",2],["Ibros",2],["Iznatoraf",2],["Jabalquinto",2],["Jaén",1],["Jamilena",2],["Jimena",2],["Jódar",2],["La Carolina",2],["La Guardia de Jaén",1],["La Iruela",2],["La Puerta de Segura",2],["Lahiguera",2],["Larva",2],["Linares",2],["Lopera",2],["Los Villares",1],["Lupión",2],["Mancha Real",1],["Marmolejo",2],["Martos",2],["Mengíbar",1],["Montizón",2],["Navas de San Juan",2],["Noalejo",2],["Orcera",2],["Peal de Becerro",2],["Pegalajar",2],["Porcuna",2],["Pozo Alcón",2],["Puente de Génave",2],["Quesada",2],["Rus",2],["Sabiote",2],["Santa Elena",2],["Santiago de Calatrava",2],["Santiago-Pontones",2],["Santisteban del Puerto",2],["Santo Tomé",2],["Segura de la Sierra",2],["Siles",2],["Sorihuela del Guadalimar",2],["Torreblascopedro",2],["Torredelcampo",1],["Torredonjimeno",2],["Torreperogil",2],["Torres",2],["Torres de Albánchez",2],["Úbeda",1],["Valdepeñas de Jaén",2],["Vilches",2],["Villacarrillo",2],["Villanueva de la Reina",2],["Villanueva del Arzobispo",2],["Villardompardo",2],["Villarrodrigo",2],["Villatorres",2]],"Málaga":[["Alameda",2],["Alcaucín",2],["Alfarnate",2],["Alfarnatejo",2],["Algarrobo",2],["Algatocín",2],["Alhaurín de la Torre",1],["Alhaurín el Grande",2],["Almáchar",2],["Almargen",2],["Almogía",2],["Álora",2],["Alozaina",2],["Alpandeire",2],["Antequera",1],["Árchez",2],["Archidona",2],["Ardales",2],["Arenas",2],["Arriate",2],["Atajate",2],["Benadalid",2],["Benahavís",2],["Benalauría",2],["Benalmádena",1],["Benamargosa",2],["Benamocarra",2],["Benaoján",2],["Benarrabá",2],["Campillos",2],["Cañete la Real",2],["Canillas de Aceituno",2],["Canillas de Albaida",2],["Carratraca",2],["Cartajima",2],["Cártama",1],["Casabermeja",2],["Casarabonela",2],["Casares",2],["Coín",2],["Colmenar",2],["Comares",2],["Cómpeta",2],["Cortes de la Frontera",2],["Cuevas Bajas",2],["Cuevas de San Marcos",2],["Cuevas del Becerro",2],["Cútar",2],["El Borge",2],["El Burgo",2],["Estepona",1],["Faraján",2],["Frigiliana",2],["Fuengirola",1],["Fuente de Piedra",2],["Gaucín",2],["Genalguacil",2],["Guaro",2],["Humilladero",2],["Igualeja",2],["Istán",2],["Iznate",2],["Jimera de Líbar",2],["Jubrique",2],["Júzcar",2],["Macharaviaya",2],["Málaga",1],["Manilva",2],["Marbella",1],["Mijas",1],["Moclinejo",2],["Mollina",2],["Monda",2],["Montecorto",2],["Montejaque",2],["Nerja",1],["Ojén",2],["Parauta",2],["Periana",2],["Pizarra",2],["Pujerra",2],["Rincón de la Victoria",1],["Riogordo",2],["Ronda",2],["Salares",2],["Sayalonga",2],["Sedella",2],["Serrato",2],["Sierra de Yeguas",2],["Teba",2],["Tolox",2],["Torremolinos",1],["Torrox",2],["Totalán",2],["Valle de Abdalajís",2],["Vélez-Málaga",1],["Villanueva de Algaidas",2],["Villanueva de la Concepción",2],["Villanueva de Tapia",2],["Villanueva del Rosario",2],["Villanueva del Trabuco",2],["Viñuela",2],["Yunquera",2]],"Sevilla":[["Aguadulce",2],["Alanís",2],["Albaida del Aljarafe",2],["Alcalá de Guadaíra",1],["Alcalá del Río",2],["Alcolea del Río",2],["Algámitas",2],["Almadén de la Plata",2],["Almensilla",2],["Arahal",2],["Aznalcázar",2],["Aznalcóllar",2],["Badolatosa",2],["Benacazón",2],["Bollullos de la Mitación",2],["Bormujos",1],["Brenes",2],["Burguillos",2],["Camas",1],["Cañada Rosal",2],["Cantillana",2],["Carmona",1],["Carrión de los Céspedes",2],["Casariche",2],["Castilblanco de los Arroyos",2],["Castilleja de Guzmán",2],["Castilleja de la Cuesta",2],["Castilleja del Campo",2],["Cazalla de la Sierra",2],["Constantina",2],["Coria del Río",2],["Coripe",2],["Dos Hermanas",1],["Écija",1],["El Castillo de las Guardas",2],["El Coronil",2],["El Cuervo de Sevilla",2],["El Garrobo",2],["El Madroño",2],["El Palmar de Troya",2],["El Pedroso",2],["El Real de la Jara",2],["El Ronquillo",2],["El Rubio",2],["El Saucejo",2],["El Viso del Alcor",1],["Espartinas",2],["Estepa",2],["Fuentes de Andalucía",2],["Gelves",2],["Gerena",2],["Gilena",2],["Gines",2],["Guadalcanal",2],["Guillena",2],["Herrera",2],["Huévar del Aljarafe",2],["Isla Mayor",2],["La Algaba",2],["La Campana",2],["La Luisiana",2],["La Puebla de Cazalla",2],["La Puebla de los Infantes",2],["La Puebla del Río",2],["La Rinconada",1],["La Roda de Andalucía",2],["Lantejuela",2],["Las Cabezas de San Juan",2],["Las Navas de la Concepción",2],["Lebrija",2],["Lora de Estepa",2],["Lora del Río",2],["Los Corrales",2],["Los Molares",2],["Los Palacios y Villafranca",1],["Mairena del Alcor",1],["Mairena del Aljarafe",1],["Marchena",2],["Marinaleda",2],["Martín de la Jara",2],["Montellano",2],["Morón de la Frontera",1],["Olivares",2],["Osuna",2],["Palomares del Río",2],["Paradas",2],["Pedrera",2],["Peñaflor",2],["Pilas",2],["Pruna",2],["Salteras",2],["San Juan de Aznalfarache",1],["San Nicolás del Puerto",2],["Sanlúcar la Mayor",2],["Santiponce",2],["Sevilla",1],["Tocina",2],["Tomares",1],["Umbrete",2],["Utrera",1],["Valencina de la Concepción",2],["Villamanrique de la Condesa",2],["Villanueva de San Juan",2],["Villanueva del Ariscal",2],["Villanueva del Río y Minas",2],["Villaverde del Río",2]]};
+  const f2=x=>x.toFixed(2).replace('.',',');
+  const fmt2=n=>{ const [e,d]=(Math.round(n*100)/100).toFixed(2).split('.'); return e.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+d+' €'; };
+  const num=id=>{ const v=parseFloat($(id).value); return isNaN(v)?0:Math.max(0,v); };
+  const store=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+  const ldS=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
+  function fillProv(sel){
+    sel.innerHTML='<option value="">Seleccione…</option>'+Object.keys(MUNIS).map(p=>`<option>${esc(p)}</option>`).join('');
+    const mun=$(sel.dataset.prov);
+    const fillMun=()=>{ const l=MUNIS[sel.value]||[]; mun.innerHTML='<option value="">'+(l.length?'Seleccione…':'Elija antes la provincia')+'</option>'+l.map(m=>`<option value="${m[1]}">${esc(m[0])}</option>`).join(''); mun.disabled=!l.length; };
+    sel.addEventListener('change',fillMun); fillMun();
+  }
+  function setMun(provId,prov,mun){ const p=$(provId); p.value=prov; p.dispatchEvent(new Event('change')); const m=$(p.dataset.prov); const o=[...m.options].find(x=>x.text===mun); if(o) m.value=o.value, o.selected=true; }
+  const munTxt=id=>{ const m=$(id); return m.selectedIndex>0?m.options[m.selectedIndex].text:''; };
+  const err=(el,msg)=>{ el.hidden=false; el.innerHTML=`<span class="small" style="color:var(--warn)"><b>Faltan datos:</b> ${esc(msg)}</span>`; };
+
+  // ===== Calculadora de ingresos (IPREM) =====
+  function coefJunta(n, grupos, ter){
+    const cm = n<=1?1:(n===2?0.75:0.70);
+    const cg = Math.pow(0.90, grupos);
+    const ct = ter?0.86:1;
+    const raw = cm*cg*ct;
+    return {cm,cg,ct,raw,c:Math.min(1,Math.max(0.65,raw))};
+  }
+  window.coefJunta=coefJunta;
+  fillProv($('iProv'));
+  const IIDS=['iAnio','iUF','iGr','iBase'];
+  function calcIng(){
+    const R=$('iRes'), falta=[];
+    if(!$('iProv').value) falta.push('provincia'); if(!munTxt('iMun')) falta.push('municipio');
+    if(!$('iAnio').value) falta.push('año de referencia'); if(!$('iUF').value) falta.push('número de miembros');
+    if($('iBase').value==='') falta.push('base imponible');
+    if(falta.length) return err(R,falta.join(', ')+'.');
+    const ip=parseFloat($('iAnio').value), n=parseInt($('iUF').value,10), g=parseInt($('iGr').value,10)||0, tot=num('iBase');
+    const k=coefJunta(n,g,true), pond=tot*k.c, v=pond/ip;
+    const regs=[['Especial',3],['General',5.5],['Precio limitado',7]];
+    R.hidden=false;
+    R.innerHTML=`<span class="small muted">${esc(munTxt('iMun'))} (${esc($('iProv').value)}) · renta ${esc($('iAnio').options[$('iAnio').selectedIndex].text.split(' ·')[0])}</span>
+      <span class="bigv num">${f2(v)} <span class="small muted" style="font-family:var(--body);font-size:.95rem">veces el IPREM</span></span>
+      <table><tbody>
+        <tr><td>Base imponible</td><td class="r">${fmt2(tot)}</td></tr>
+        <tr><td>Coeficiente por miembros (${n===6?'6 o más':n})</td><td class="r">× ${f2(k.cm)}</td></tr>
+        ${g?`<tr><td>Grupos de especial protección (${g===4?'4 o más':g})</td><td class="r">× ${k.cg.toFixed(3).replace('.',',')}</td></tr>`:''}
+        <tr><td>Coeficiente territorial</td><td class="r">× 0,86</td></tr>
+        <tr><td>Coeficiente final ${k.raw<0.65?'(sube al mínimo 0,65)':''}</td><td class="r">${k.c.toFixed(3).replace('.',',')}</td></tr>
+        <tr><td>Ingresos familiares corregidos</td><td class="r">${fmt2(pond)}</td></tr>
+        <tr class="t"><td>÷ IPREM ${fmt2(ip)}</td><td class="r">${f2(v)} IPREM</td></tr>
+      </tbody></table>
+      <div class="pills">${regs.map(r=>`<span class="pill ${v<=r[1]?'ok':'no'}">${r[0]}: ${v<=r[1]?'cumple':'no cumple'} (≤ ${String(r[1]).replace('.',',')})</span>`).join('')}</div>
+      <table><tbody>${regs.map(r=>`<tr><td>Base imponible máxima · ${r[0]}</td><td class="r">${fmt2(r[1]*ip/k.c)}</td></tr>`).join('')}</tbody></table>`;
+    store('vpo-ing',{prov:$('iProv').value,mun:munTxt('iMun'),...Object.fromEntries(IIDS.map(i=>[i,i==='iAnio'?$(i).selectedIndex:$(i).value]))});
+  }
+  $('iCalc').addEventListener('click',calcIng);
+  $('iClr').addEventListener('click',()=>{ $('iProv').value=''; $('iProv').dispatchEvent(new Event('change')); $('iAnio').value=''; $('iUF').value=''; $('iGr').value='0'; $('iBase').value=''; $('iRes').hidden=true; $('iRes').innerHTML=''; store('vpo-ing',null); });
+  $('fi').addEventListener('change',e=>{ if(!$('iRes').hidden && e.target.id!=='iProv') calcIng(); });
+  $('iBase').addEventListener('keydown',e=>{ if(e.key==='Enter') calcIng(); });
+  { const s=ldS("vpo-ing")||{prov:'Sevilla',mun:'Sevilla',iAnio:1,iUF:'2',iGr:'1',iBase:'28000'};
+    setMun('iProv',s.prov,s.mun); $('iAnio').selectedIndex=s.iAnio||0; $('iUF').value=s.iUF||''; $('iGr').value=s.iGr||'0'; $('iBase').value=s.iBase||'';
+    if($('iProv').value && $('iAnio').value && $('iUF').value) calcIng(); }
+
+  // ===== Calculadora de precio máximo =====
+  const MOD=920.29;
+  fillProv($('pProv'));
+  const PIDS=['pFec','pUso','pReg','pSup','pGar','pTra','pOtr'];
+  function calcPrecio(){
+    const R=$('pRes'), falta=[];
+    if(!$('pProv').value) falta.push('provincia'); if(!munTxt('pMun')) falta.push('municipio');
+    if(!$('pUso').value) falta.push('uso de la vivienda'); if(!$('pReg').value) falta.push('régimen');
+    if(!(num('pSup')>0)) falta.push('superficie útil de la vivienda');
+    if(falta.length) return err(R,falta.join(', ')+'.');
+    const grupo=$('pMun').value, ct=grupo==='1'?1.5:1.3, cr0=parseFloat($('pReg').value);
+    let cr=cr0, nota='';
+    const fec=$('pFec').value?new Date($('pFec').value+'T00:00:00'):null;
+    let anios=null;
+    if(fec && !isNaN(fec)){ const h=new Date(); anios=h.getFullYear()-fec.getFullYear()-((h.getMonth()<fec.getMonth()||(h.getMonth()===fec.getMonth()&&h.getDate()<fec.getDate()))?1:0); }
+    const mej=$('pMej').getAttribute('aria-pressed')==='true', fm=mej?1.10:1;
+    if(anios!==null && anios>=15 && cr0<2.0){ cr=2.0; nota=`Han pasado ${anios} años desde la calificación: se calcula automáticamente con el coeficiente de precio limitado (art. 27.2 del Reglamento). Con su régimen original serían ${fmt2(fm*MOD*ct*cr0*(num('pSup')+0.6*(num('pGar')+num('pTra')+num('pOtr'))))}.`; }
+    const m2=MOD*ct*cr, sup=num('pSup'), gar=num('pGar'), tra=num('pTra'), otr=num('pOtr');
+    const pv=m2*sup, pg=m2*0.6*gar, pt=m2*0.6*tra, po=m2*0.6*otr, tot=pv+pg+pt+po;
+    const uso=$('pUso').value, pct=uso==='aoc'?0.05:0.045;
+    const fin=tot*fm, anual=fin*pct;
+    const big= uso==='venta' ? fmt2(fin) : fmt2(anual/12)+' <span class="small muted" style="font-family:var(--body);font-size:.95rem">al mes</span>';
+    const rows=(l,v)=>`<tr><td>${l}</td><td class="r">${v}</td></tr>`;
+    R.hidden=false;
+    R.innerHTML=`<span class="small muted">${esc(munTxt('pMun'))} (${esc($('pProv').value)}) · Grupo ${grupo} · ${esc($('pReg').options[$('pReg').selectedIndex].text)}${cr!==cr0?' → precio limitado':''} · ${fmt2(m2)} por m² útil</span>
+      <span class="small"><b>${uso==='venta'?'Precio máximo de venta':uso==='alq'?'Renta máxima de alquiler':'Renta máxima en alquiler con opción a compra'}</b></span>
+      <span class="bigv num">${big}</span>
+      ${(cr!==cr0||mej)?`<div class="pills">${cr!==cr0?`<span class="pill auto">Más de 15 años → precio limitado</span>`:''}${mej?`<span class="pill auto">+10 % mejoras</span>`:''}</div>`:''}
+      <table><tbody>
+        ${rows(`Vivienda: ${sup.toLocaleString('es-ES')} m² × ${fmt2(m2)}`,fmt2(pv))}
+        ${gar?rows(`Garaje vinculado: ${gar.toLocaleString('es-ES')} m² × 60 %`,fmt2(pg)):''}
+        ${tra?rows(`Trastero vinculado: ${tra.toLocaleString('es-ES')} m² × 60 %`,fmt2(pt)):''}
+        ${otr?rows(`Otros anejos vinculados: ${otr.toLocaleString('es-ES')} m² × 60 %`,fmt2(po)):''}
+        ${mej?`<tr><td>Suma de vivienda y anejos</td><td class="r">${fmt2(tot)}</td></tr><tr><td>+ 10 % de mejoras</td><td class="r">${fmt2(tot*0.10)}</td></tr>`:''}
+        <tr class="t"><td>Precio máximo de venta${mej?' con mejoras':''}</td><td class="r">${fmt2(fin)}</td></tr>
+        ${uso!=='venta'?rows(`Renta máxima anual (${uso==='aoc'?'5':'4,5'} % del precio)`,fmt2(anual))+rows('Renta máxima mensual',fmt2(anual/12)):''}
+      </tbody></table>
+      ${nota?`<span class="small">${esc(nota)}</span>`:''}
+      ${anios===null?'<span class="small muted">Sin fecha de calificación no se puede comprobar la regla de los 15 años.</span>':''}
+      ${mej?'':'<span class="small muted">Si la vivienda tiene mejoras justificadas, pulsa «Aplicar 10 % de mejoras».</span>'}
+      ${sup>90?'<span class="small" style="color:var(--warn)">Más de 90 m² útiles: comprueba con la Junta cuántos metros computan, porque la vivienda protegida tiene superficies máximas.</span>':''}`;
+    store('vpo-pre',{prov:$('pProv').value,mun:munTxt('pMun'),mej,...Object.fromEntries(PIDS.map(i=>[i,$(i).value]))});
+  }
+  $('pCalc').addEventListener('click',calcPrecio);
+  $('pMej').addEventListener('click',()=>{ const b=$('pMej'); b.setAttribute('aria-pressed',String(b.getAttribute('aria-pressed')!=='true')); calcPrecio(); });
+  $('pFec').addEventListener('input',()=>{ if(!$('pRes').hidden) calcPrecio(); });
+  $('pClr').addEventListener('click',()=>{ $('pProv').value=''; $('pProv').dispatchEvent(new Event('change')); PIDS.forEach(i=>$(i).value=''); $('pMej').setAttribute('aria-pressed','false'); $('pRes').hidden=true; $('pRes').innerHTML=''; store('vpo-pre',null); });
+  $('fp').addEventListener('change',e=>{ if(!$('pRes').hidden && e.target.id!=='pProv') calcPrecio(); });
+  $('fp').addEventListener('keydown',e=>{ if(e.key==='Enter' && e.target.tagName==='INPUT') calcPrecio(); });
+  { const s=ldS("vpo-pre")||{prov:'Sevilla',mun:'Sevilla',pFec:'2012-06-15',pUso:'venta',pReg:'1.7',pSup:'75',pGar:'0',pTra:'0',pOtr:'0'};
+    setMun('pProv',s.prov,s.mun); PIDS.forEach(i=>{ if(s[i]!=null) $(i).value=s[i]; }); $('pMej').setAttribute('aria-pressed',String(!!s.mej));
+    if($('pProv').value && $('pUso').value && $('pReg').value) calcPrecio(); }
+
+  const IPREM=8400;
+  const IDS=['ing','miem','viv','div','grp','pad','ins'];
+  const EX={ing:28000,miem:2,viv:'div',div:'dem',pad:true,ins:false};
+  function load(d){ for(const k in d){ const e=$(k); if(!e) continue; if(e.type==='checkbox') e.checked=!!d[k]; else e.value=d[k]; } }
+  function read(){ const o={}; IDS.forEach(k=>{ const e=$(k); o[k]=e.type==='checkbox'?e.checked:(e.type==='number'?(e.value===''?0:Math.max(0,parseFloat(e.value))):e.value); }); return o; }
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected', x===t?'true':'false'));
+    ['p1','p2','p3'].forEach(p=>$(p).hidden = p!==t.dataset.p);
+  }));
+
+  function render(){
+    const s=read();
+    $('wDiv').hidden = s.viv!=='div';
+    const kk = window.coefJunta(Math.max(1,Math.round(s.miem||1)), s.grp?1:0, true);
+    const veces = s.ing*kk.c/IPREM;
+    const regs=[['Especial',3],['General',5.5],['Precio limitado',7]];
+    const items=[], alerts=[], papeles=[];
+    // Vivienda
+    let vivOK, vivTxt, vivEst;
+    if(s.viv==='no'){ vivOK=true; vivEst='ok'; vivTxt='No tienes otra vivienda.'; }
+    else if(s.viv==='si'){ vivOK=false; vivEst='no'; vivTxt='Tienes otra vivienda: no cumples, salvo excepciones muy concretas (vivienda en ruina, inadecuada para tu discapacidad, expropiada…).'; }
+    else if(s.viv==='her'){ vivOK=null; vivEst='warn'; vivTxt='Una parte heredada no suele ser "pleno dominio", pero pregunta al registro.'; papeles.push('Nota simple o escritura de herencia que muestre tu porcentaje'); }
+    else {
+      const d=s.div;
+      if(d==='nada'){ vivOK=false; vivEst='no'; vivTxt='Sin papeles del divorcio sigues siendo dueño de una vivienda con derecho a usarla: no cumples todavía.'; papeles.push('Presentar la demanda de divorcio y pedir medidas provisionales'); }
+      else if(d==='dem'){ vivOK=null; vivEst='warn'; vivTxt='Con la demanda solo, normalmente no basta. Algunos registros te inscriben y piden la sentencia antes de adjudicar.'; papeles.push('Copia de la demanda de divorcio sellada','Pedir medidas provisionales con el uso de la vivienda para el otro'); }
+      else if(d==='med'){ vivOK=true; vivEst='warn'; vivTxt='El auto de medidas provisionales con el uso para el otro suele aceptarse como necesidad de vivienda.'; papeles.push('Auto de medidas provisionales','Copia de la demanda de divorcio'); }
+      else if(d==='sen'){ vivOK=true; vivEst='ok'; vivTxt='Sentencia o convenio con el uso para el otro: es la excepción por divorcio.'; papeles.push('Sentencia de divorcio y convenio regulador aprobado','Nota simple de la vivienda'); }
+      else if(d==='usoyo'){ vivOK=false; vivEst='no'; vivTxt='Si el uso de la casa es tuyo, tienes dónde vivir: no cumples.'; }
+      else { vivOK=true; vivEst='ok'; vivTxt='Ya no eres dueño: cumples sin necesidad de excepción.'; papeles.push('Escritura o convenio donde cedes tu parte','Nota simple actualizada'); }
+    }
+    items.push([vivEst, 'Otra vivienda', vivTxt]);
+    // Ingresos
+    const minReg = regs.find(r=>veces<=r[1]);
+    items.push([minReg?'ok':'no','Ingresos', s.ing? (fmt(s.ing)+' × coeficiente '+kk.c.toFixed(2).replace('.',',')+' = '+fmt(s.ing*kk.c)+', que son '+veces.toFixed(2).replace('.',',')+' veces el IPREM. '+(minReg?'Entras en: '+regs.filter(r=>veces<=r[1]).map(r=>r[0]).join(', ')+'.':'Superas el límite más alto (7 veces).')) : 'Pon los ingresos.']);
+    items.push([s.pad?'ok':'warn','Padrón', s.pad?'Empadronado en Andalucía.':'La nueva ley pide estar empadronado en Andalucía, con excepciones.']);
+    items.push([s.ins?'ok':'warn','Registro de Demandantes', s.ins?'Ya inscrito. Recuerda renovar a los 3 años.':'Hay que inscribirse: sin inscripción no te pueden adjudicar ninguna.']);
+
+    let verdict, vcls;
+    if(vivOK===false || !minReg){ verdict='Ahora mismo no cumples'; vcls='bad'; }
+    else if(vivOK===null || !s.pad){ verdict='Puedes, pero depende de un papel'; vcls='warn'; }
+    else { verdict='Cumples los requisitos básicos'; vcls='ok'; }
+
+    if(s.viv==='div') alerts.push(['','Las personas que vienen de una ruptura familiar son grupo preferente','La Ley 5/2025 las incluye entre los colectivos con preferencia. Indícalo al inscribirte.']);
+    if(s.viv==='div' && (s.div==='dem'||s.div==='nada')) alerts.push(['warn','Lo más rápido: medidas provisionales o ceder tu parte','Pide en el divorcio medidas provisionales con el uso de la casa para el otro, o acuerda la extinción de condominio para dejar de ser dueño. Los pasos están en la web Divorcio y Vivienda.']);
+
+    $('out').innerHTML=`
+      <div class="card">
+        <div class="eyebrow">Resultado</div>
+        <p class="verdict ${vcls}">${esc(verdict)}</p>
+        <div class="checks3">${regs.map(r=>{ const ok = vivOK!==false && veces<=r[1]; return `<div class="c3 ${s.ing?(ok?'ok':'no'):'na'}"><b>${r[0]}</b><span>Hasta ${r[1].toString().replace('.',',')} IPREM: ingresos reales de hasta ${fmt(r[1]*IPREM/kk.c)}</span><span>${s.ing?(ok?'Puedes optar':'No'):'—'}</span></div>`; }).join('')}</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Requisito a requisito</div>
+        <div class="list">${items.map(i=>`<div><span class="dot ${i[0]}"></span><span><b>${esc(i[1])}.</b> ${esc(i[2])}</span></div>`).join('')}</div>
+      </div>
+      ${alerts.length?`<div class="alerts">${alerts.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join('')}</div>`:''}
+      <div class="card">
+        <div class="eyebrow">Papeles para inscribirte</div>
+        <div class="list">${['DNI de todos los que vivirán','Declaración de la renta del último año de todos (o certificado de Hacienda)','Certificado de empadronamiento',...papeles].map(p=>`<div><span class="dot ok"></span><span>${esc(p)}</span></div>`).join('')}</div>
+        <p class="small muted">En Sevilla, en el Registro Municipal de Demandantes (EMVISESA). Cada municipio puede pedir algo más.</p>
+      </div>`;
+  }
+  function save(){ try{ localStorage.setItem('vpo-caso', JSON.stringify(read())); }catch(e){} }
+  $('f').addEventListener('input',()=>{render();save();});
+  $('f').addEventListener('change',()=>{render();save();});
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('vpo-caso')||'null'); }catch(e){}
+  load(Object.assign({},EX,saved||{}));
+  render();
+})();
+</script>
+
+<script>if(window.top!==window.self){var b=document.querySelector(".backbar");if(b)b.remove();}</script>
+</body>
+</html>
